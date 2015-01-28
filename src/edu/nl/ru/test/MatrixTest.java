@@ -31,6 +31,7 @@ public class MatrixTest extends TestCase {
         assertEquals(1.5, mean.getData()[0][0]);
         assertEquals(4.5, mean.getData()[1][0]);
     }
+
     public void testSumAll() throws Exception {
         Matrix sum = a.sum();
         assertEquals(12.0, sum.getData()[0][0]);

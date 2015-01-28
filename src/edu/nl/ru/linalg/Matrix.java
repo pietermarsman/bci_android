@@ -58,7 +58,7 @@ public class Matrix extends Array2DRowRealMatrix {
         for (int i = 0; i < getRowDimension(); i++) {
             for (int j = 0; j < getColumnDimension(); j++)
                 sb.append(getData()[i][j]).append(" ");
-            if (i < getRowDimension()-1)
+            if (i < getRowDimension() - 1)
                 sb.append("\n");
         }
         return sb.toString();
@@ -97,8 +97,7 @@ public class Matrix extends Array2DRowRealMatrix {
                 for (int t = 0; t < times; t++)
                     newData[t + times * r] = this.getRow(r);
             repeated = new Matrix(newData);
-        }
-        else {
+        } else {
             double[][] newData = new double[columns][rows];
             for (int c = 0; c < this.getColumnDimension(); c++)
                 for (int t = 0; t < times; t++)
@@ -179,8 +178,7 @@ public class Matrix extends Array2DRowRealMatrix {
             if (axis == 0)
                 mean = new Matrix(mean.transpose());
             return new Matrix(this.subtract(mean));
-        }
-        else {
+        } else {
             double[][] ret = this.getData();
             if (axis == 0) {
                 for (int c = 0; c < this.getColumnDimension(); c++) {
@@ -193,8 +191,7 @@ public class Matrix extends Array2DRowRealMatrix {
                     for (int r = 0; r < this.getRowDimension(); r++)
                         ret[r][c] = ret[r][c] - intercept - r * slope;
                 }
-            }
-            else {
+            } else {
                 for (int r = 0; r < this.getRowDimension(); r++) {
                     SimpleRegression regression = new SimpleRegression();
                     double[] row = this.getRow(r);
@@ -212,6 +209,6 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public static void checkAxis(int axis) throws IllegalArgumentException {
         if (axis < 0 || axis > 1)
-            throw  new IllegalArgumentException("Axis should be 0 or 1 but is " + axis);
+            throw new IllegalArgumentException("Axis should be 0 or 1 but is " + axis);
     }
 }
