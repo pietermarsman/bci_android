@@ -1,10 +1,9 @@
 package edu.nl.ru.linalg;
 
+import edu.nl.ru.miscellaneous.Triple;
+import edu.nl.ru.miscellaneous.Tuple;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.DiagonalMatrix;
-import org.apache.commons.math3.linear.EigenDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.transform.DftNormalization;
@@ -13,7 +12,8 @@ import org.apache.commons.math3.transform.TransformType;
 
 import java.util.Arrays;
 
-import static edu.nl.ru.linalg.Miscelancous.reverseDoubleArrayInPlace;
+import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.reverseDoubleArrayInPlace;
+import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.getSortIdx;
 import static org.apache.commons.math3.stat.StatUtils.max;
 
 /**
@@ -30,7 +30,7 @@ public class Matrix extends Array2DRowRealMatrix {
     // [x] inverse FFT,
     // [x] temporal filtering,
     // [ ] convolution,
-    // [ ] detrending,
+    // [x] detrending,
     // [x] covariance computation,
     // [ ] data selection (subsetting),
     // [ ] outlier-detection,
@@ -310,7 +310,42 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(ft);
     }
 
-    public Matrix spatialFilter(String type){
+    public Tuple<Matrix, RealVector> eig() {
+        return eig("descending");
+    }
+
+    public Tuple<Matrix, RealVector> eig(String order) {
+        // FIXME is returning negative of python implementation
+        // FIXME slightly different from python implementation
+        Matrix.checkString(order, new String[]{"descending", "ascending"});
+        EigenDecomposition eig = new EigenDecomposition(this);
+        RealMatrix oldVecs = new Array2DRowRealMatrix(eig.getV().getData());
+        double[] oldVals = eig.getRealEigenvalues();
+        RealMatrix newVecs = new Array2DRowRealMatrix(eig.getV().getData());
+        double[] newVals = eig.getRealEigenvalues();
+        Integer[] sortIdx = getSortIdx(oldVals);
+        for (int i = 0; i < sortIdx.length; i++) {
+            Integer id = sortIdx[i];
+            newVecs.setColumn(i, oldVecs.getColumn(id));
+            newVals[i] = oldVals[id];
+        }
+        if (order.equalsIgnoreCase("descending")) {
+            return new Tuple<Matrix, RealVector>(new Matrix(newVecs), new ArrayRealVector(newVals));
+        } else {
+            Matrix eigenVecs = new Matrix(newVecs).flipLR();
+            reverseDoubleArrayInPlace(newVals);
+            RealVector eigenValues = new ArrayRealVector(newVals);
+            return new Tuple<Matrix, RealVector>(eigenVecs, eigenValues);
+        }
+    }
+
+    public Triple<Matrix, Matrix, Matrix> svd() {
+        SingularValueDecomposition svd = new SingularValueDecomposition(this);
+        return new Triple<Matrix, Matrix, Matrix>(new Matrix(svd.getU()), new Matrix(svd.getS()), new Matrix(svd
+                .getVT()));
+    }
+
+    public Matrix spatialFilter(String type) {
         return spatialFilter(type, 1e-15);
     }
 
@@ -320,11 +355,9 @@ public class Matrix extends Array2DRowRealMatrix {
             return new Matrix(this.preMultiply(Matrix.car(this.getRowDimension())));
         } else {
             // Get eigen decomposition of the covariance matrix
-            RealMatrix c = this.covariance();
-            EigenDecomposition eig = new EigenDecomposition(c);
-            Matrix eigenVecs = new Matrix(eig.getV()).flipLR();
-            double[] eigenVals = eig.getRealEigenvalues();
-            reverseDoubleArrayInPlace(eigenVals);
+            Tuple<Matrix, RealVector> eigenDecomposition = this.covariance().eig("ascending");
+            Matrix eigenVecs = eigenDecomposition.x;
+            double[] eigenVals = eigenDecomposition.y.toArray();
             // Use the decomposition to create the multiplication matrix for the whiten spatial filter
             double[] diagVals = new double[eigenVals.length];
             double max = max(diagVals);

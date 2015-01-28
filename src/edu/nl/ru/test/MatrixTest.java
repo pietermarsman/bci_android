@@ -1,7 +1,9 @@
 package edu.nl.ru.test;
 
 import edu.nl.ru.linalg.Matrix;
+import edu.nl.ru.miscellaneous.Tuple;
 import junit.framework.TestCase;
+import org.apache.commons.math3.linear.RealVector;
 
 public class MatrixTest extends TestCase {
 
@@ -105,12 +107,12 @@ public class MatrixTest extends TestCase {
 
     public void testIFft0() throws Exception {
         Matrix inversePower = a.ifft(0);
-//        System.out.println(inversePower);
+        //        System.out.println(inversePower);
     }
 
     public void testIFft1() throws Exception {
         Matrix inversePower = a.ifft(1);
-//        System.out.println(inversePower);
+        //        System.out.println(inversePower);
     }
 
     public void testZeros() throws Exception {
@@ -158,5 +160,11 @@ public class MatrixTest extends TestCase {
         assertEquals(new Matrix(goodMatrix), flip);
     }
 
-
+    public void testEig() throws Exception {
+        Tuple<Matrix, RealVector> eig = b.eig();
+        double[] goodValues = {.993, .439, -0.032};
+        double[][] goodVector = {{-0.604, -0.666, 0.584}, {-0.402, -0.249, -0.808}, {-0.687, 0.702, 0.061}};
+        assertEquals(new Matrix(new Matrix(goodValues)).round(2), new Matrix(eig.y.toArray()).round(2));
+        assertEquals(new Matrix(goodVector).round(2), eig.x.round(2));
+    }
 }
