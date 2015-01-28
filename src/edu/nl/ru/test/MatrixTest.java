@@ -7,6 +7,7 @@ public class MatrixTest extends TestCase {
 
     Matrix a, b;
 
+
     protected void setUp() throws Exception {
         double[][] dataA = {{1.0, 2.0}, {5.0, 4.0}};
         double[][] dataB = {{0.5, 0.4, 0.2}, {0.3, 0.2, 0.2}, {.2, .2, .7}};
@@ -24,7 +25,6 @@ public class MatrixTest extends TestCase {
         assertEquals(3.0, mean.getData()[0][0]);
         assertEquals(3.0, mean.getData()[1][0]);
     }
-
 
     public void testMean1() throws Exception {
         Matrix mean = a.mean(1);
@@ -51,7 +51,7 @@ public class MatrixTest extends TestCase {
 
     public void testCovariance() throws Exception {
         Matrix cov = a.covariance();
-        double[][] goodAnswer = {{8.0, 4.0}, {4.0, 2.0}};
+        double[][] goodAnswer = {{0.5, -.5}, {-.5, .5}};
         assertEquals(new Matrix(goodAnswer), cov);
     }
 
@@ -90,4 +90,73 @@ public class MatrixTest extends TestCase {
         double[][] goodMatrix = {{0.133, 0.033, -0.166}, {0.066, -0.033, -0.033}, {-0.166, -0.166, 0.33}};
         assertEquals(new Matrix(goodMatrix).round(2), detrend.round((2)));
     }
+
+    public void testFft0() throws Exception {
+        Matrix power = a.fft(0);
+        double[][] goodMatrix = {{36., 36.}, {16., 4.}};
+        assertEquals(new Matrix(goodMatrix), power);
+    }
+
+    public void testFft1() throws Exception {
+        Matrix power = a.fft(1);
+        double[][] goodMatrix = {{9., 1.}, {81., 1.}};
+        assertEquals(new Matrix(goodMatrix), power);
+    }
+
+    public void testIFft0() throws Exception {
+        Matrix inversePower = a.ifft(0);
+//        System.out.println(inversePower);
+    }
+
+    public void testIFft1() throws Exception {
+        Matrix inversePower = a.ifft(1);
+//        System.out.println(inversePower);
+    }
+
+    public void testZeros() throws Exception {
+        Matrix zeros = Matrix.zeros(10, 10);
+        assertEquals(0.0, zeros.sum().getData()[0][0]);
+    }
+
+    public void testOnes() throws Exception {
+        Matrix ones = Matrix.ones(10, 10);
+        assertEquals(100.0, ones.sum().getData()[0][0]);
+    }
+
+    public void testEye() throws Exception {
+        Matrix eye = Matrix.eye(10);
+        assertEquals(10.0, eye.sum().getData()[0][0]);
+    }
+
+    public void testCar() throws Exception {
+        Matrix car = Matrix.car(2);
+        double[][] goodMatrix = {{.5, -.5}, {-.5, .5}};
+        assertEquals(new Matrix(goodMatrix), car);
+    }
+
+    public void testSpatialFilterCar() throws Exception {
+        Matrix filtered = a.spatialFilter("car");
+        double[][] goodMatrix = {{-2., -1.}, {2., 1.}};
+        assertEquals(new Matrix(goodMatrix), filtered);
+    }
+
+    public void testSpatialFilterWhiten() throws Exception {
+        Matrix filtered = b.spatialFilter("whiten");
+        double[][] goodMatrix = {{5.223, 4.001, 3.912}, {6.484, 5.021, 5.685}, {3.152, 2.548, 4.432}};
+        assertEquals(new Matrix(goodMatrix).round(2), filtered.round(2));
+    }
+
+    public void testFlipUP() throws Exception {
+        Matrix flip = a.flipUD();
+        double[][] goodMatrix = {{5., 4.}, {1., 2.}};
+        assertEquals(new Matrix(goodMatrix), flip);
+    }
+
+    public void testFlipULR() throws Exception {
+        Matrix flip = a.flipLR();
+        double[][] goodMatrix = {{2., 1.}, {4., 5.}};
+        assertEquals(new Matrix(goodMatrix), flip);
+    }
+
+
 }
