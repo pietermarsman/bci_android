@@ -9,6 +9,7 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
+import org.apache.commons.math3.util.MathArrays;
 
 import java.util.Arrays;
 
@@ -29,7 +30,7 @@ public class Matrix extends Array2DRowRealMatrix {
     // [x] FFT,                                         > this.fft()
     // [x] inverse FFT,                                 > this.ifft()
     // [x] temporal filtering,                          > this.spatialFilter()
-    // [ ] convolution,
+    // [x] convolution,                                 > this.convolve()
     // [x] detrending,                                  > this.detrend()
     // [x] covariance computation,                      > this.covariance()
     // [x] data selection (subsetting)                  > getSubMatrix()
@@ -366,6 +367,20 @@ public class Matrix extends Array2DRowRealMatrix {
             RealMatrix diag = new DiagonalMatrix(diagVals);
             RealMatrix transform = eigenVecs.multiply(diag).multiply(eigenVecs.transpose());
             return new Matrix(this.preMultiply(transform));
+        }
+    }
+
+    public Matrix convolve(double[] function, int axis) {
+        Matrix.checkAxis(axis);
+        if (axis == 0) {
+            int newLength = this.getColumnDimension() + function.length - 1;
+            double [][] data = new double[this.getRowDimension()][newLength];
+            for (int r = 0; r < this.getRowDimension(); r++) {
+                data[r] = MathArrays.convolve(this.getRow(r), function);
+            }
+            return new Matrix(data);
+        } else {
+            return new Matrix(new Matrix(this.transpose()).convolve(function, 0).transpose());
         }
     }
 }

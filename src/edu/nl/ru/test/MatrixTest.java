@@ -179,4 +179,17 @@ public class MatrixTest extends TestCase {
         assertEquals(new Matrix(goodValuesS).round(2), usv_t.y.round(2));
         assertEquals(new Matrix(goodValuesVT).round(2), usv_t.z.round(2));
     }
+
+    public void testConvolve0() throws Exception {
+        Matrix conv = b.convolve(a.getRow(0), 0);
+        double[][] goodValues = {{.5, 1.4, 1., .4}, {.3, .8, .6, .4}, {.2, .6, 1.1, 1.4}};
+        assertEquals(new Matrix(goodValues).round(2), conv.round(2));
+    }
+
+    public void testConvolve1() throws Exception {
+        Matrix conv = b.convolve(a.getRow(0), 1);
+        double[][] goodValues = {{.5, .4, .2}, {1.3, 1., .6}, {.8, .6, 1.1}, {.4, .4, 1.4}};
+        assertEquals(new Matrix(goodValues).round(2), conv.round(2));
+    }
+
 }
