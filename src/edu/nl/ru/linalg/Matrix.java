@@ -26,17 +26,17 @@ public class Matrix extends Array2DRowRealMatrix {
     // [x] matrix-vector products,                      > operate (M*v) and preMultiply (v*M)
     // [x] mean computation,                            > this.mean()
     // [x] sum-along a dimension,                       > this.sum()
-    // [x] FFT,
-    // [x] inverse FFT,
-    // [x] temporal filtering,
+    // [x] FFT,                                         > this.fft()
+    // [x] inverse FFT,                                 > this.ifft()
+    // [x] temporal filtering,                          > this.spatialFilter()
     // [ ] convolution,
-    // [x] detrending,
-    // [x] covariance computation,
-    // [ ] data selection (subsetting),
+    // [x] detrending,                                  > this.detrend()
+    // [x] covariance computation,                      > this.covariance()
+    // [x] data selection (subsetting)                  > getSubMatrix()
     // [ ] outlier-detection,
     // [ ] welch's method for spectrum estimation,
     // [ ] fft-based spectral filtering,
-    // [ ] eigen-decompositions (SVD/EIG).
+    // [x] eigen-decompositions (SVD/EIG)               > this.eig() and this.svd()
 
 
     public Matrix() {

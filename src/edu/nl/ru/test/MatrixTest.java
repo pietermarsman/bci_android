@@ -1,6 +1,7 @@
 package edu.nl.ru.test;
 
 import edu.nl.ru.linalg.Matrix;
+import edu.nl.ru.miscellaneous.Triple;
 import edu.nl.ru.miscellaneous.Tuple;
 import junit.framework.TestCase;
 import org.apache.commons.math3.linear.RealVector;
@@ -166,5 +167,16 @@ public class MatrixTest extends TestCase {
         double[][] goodVector = {{-0.604, -0.666, 0.584}, {-0.402, -0.249, -0.808}, {-0.687, 0.702, 0.061}};
         assertEquals(new Matrix(new Matrix(goodValues)).round(2), new Matrix(eig.y.toArray()).round(2));
         assertEquals(new Matrix(goodVector).round(2), eig.x.round(2));
+    }
+
+    public void testSVD() throws Exception {
+        // todo different signs than python in U (columns) and V (rows)
+        Triple<Matrix, Matrix, Matrix> usv_t = b.svd();
+        double[][] goodValuesU = {{0.60584241, -0.65941226, 0.44511845}, {0.40002531, -0.2311365, -0.88687974}, {0.6877025, 0.71536801, 0.1237493}};
+        double[][] goodValuesS = {{0.99574753, 0., 0.}, {0., 0.44439383, 0.}, {0., 0., 0.03163813}};
+        double[][] goodValuesVT = {{0.56286285, 0.46184651, 0.68548027}, {-0.57600592 , -0.37560963, 0.72604035}, {-0.59279219 , 0.80350184, -0.05460962}};
+        assertEquals(new Matrix(goodValuesU).round(2), usv_t.x.round(2));
+        assertEquals(new Matrix(goodValuesS).round(2), usv_t.y.round(2));
+        assertEquals(new Matrix(goodValuesVT).round(2), usv_t.z.round(2));
     }
 }
