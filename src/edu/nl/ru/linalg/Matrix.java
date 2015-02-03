@@ -5,6 +5,10 @@ import edu.nl.ru.miscellaneous.Tuple;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
+import org.apache.commons.math3.stat.descriptive.AbstractUnivariateStatistic;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
+import org.apache.commons.math3.stat.descriptive.moment.Variance;
+import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
@@ -13,8 +17,8 @@ import org.apache.commons.math3.util.MathArrays;
 
 import java.util.Arrays;
 
-import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.reverseDoubleArrayInPlace;
 import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.getSortIdx;
+import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.reverseDoubleArrayInPlace;
 import static org.apache.commons.math3.stat.StatUtils.max;
 
 /**
@@ -34,7 +38,7 @@ public class Matrix extends Array2DRowRealMatrix {
     // [x] detrending,                                  > this.detrend()
     // [x] covariance computation,                      > this.covariance()
     // [x] data selection (subsetting)                  > getSubMatrix()
-    // [ ] outlier-detection,
+    // [x] outlier-detection,
     // [ ] welch's method for spectrum estimation,
     // [ ] fft-based spectral filtering,
     // [x] eigen-decompositions (SVD/EIG)               > this.eig() and this.svd()
@@ -86,8 +90,20 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public static void checkAxis(int axis) throws IllegalArgumentException {
-        if (axis < 0 || axis > 1)
-            throw new IllegalArgumentException("Axis should be 0 or 1 but is " + axis);
+        Matrix.checkAxis(axis, false);
+    }
+
+    public static void checkAxis(int axis, boolean allowMinOne) throws IllegalArgumentException {
+        if (axis < -1 || axis > 1)
+            if (!(allowMinOne && axis == -1))
+                throw new IllegalArgumentException("Axis should be 0 or 1 but is " + axis);
+    }
+
+    public static void checkLowerUpperThreshold(double lowerThreshold, double upperThreshold) throws
+            IllegalArgumentException {
+        if (lowerThreshold > upperThreshold)
+            throw new IllegalArgumentException("Lower threshold (=" + lowerThreshold + ") should be lower than upper " +
+                    "threshold (=" + upperThreshold + ")");
     }
 
     public static Matrix zeros(int dim0, int dim1) {
@@ -182,6 +198,28 @@ public class Matrix extends Array2DRowRealMatrix {
         return repeated;
     }
 
+    public Matrix abs() {
+        Matrix m = new Matrix(this.copy());
+        m.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+            @Override
+            public double visit(int row, int column, double value) {
+                return Math.abs(value);
+            }
+        });
+        return m;
+    }
+
+    public Matrix sqrt() {
+        Matrix m = new Matrix(this.copy());
+        m.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor(){
+            @Override
+            public double visit(int row, int column, double value) {
+                return Math.sqrt(value);
+            }
+        });
+        return m;
+    }
+
     public Matrix mean() {
         return mean(-1);
     }
@@ -198,6 +236,29 @@ public class Matrix extends Array2DRowRealMatrix {
             throw new IllegalArgumentException("Wrong axis selected. Should be either -1, 0 or 1 but is " + axis);
         scalar = 1.0 / scalar;
         return new Matrix(sum(axis).scalarMultiply(scalar));
+    }
+
+    public Matrix median(int axis) {
+        Median med = new Median();
+        return this.evaluateUnivariateStatistic(axis, med);
+    }
+
+    public Matrix evaluateUnivariateStatistic(int axis, AbstractUnivariateStatistic stat) {
+        Matrix.checkAxis(axis, true);
+        double[] data;
+        if (axis == -1) {
+            return this.flatten().evaluateUnivariateStatistic(0, stat);
+        }
+        else if (axis == 0) {
+            data = new double[this.getColumnDimension()];
+            for (int c = 0; c < this.getColumnDimension(); c++)
+                data[c] = stat.evaluate(this.getColumn(c));
+        } else {
+            data = new double[this.getRowDimension()];
+            for (int r = 0; r < this.getRowDimension(); r++)
+                data[r] = stat.evaluate(this.getRow(r));
+        }
+        return new Matrix(data);
     }
 
     public Matrix sum() {
@@ -239,7 +300,24 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix covariance() {
         Covariance cov = new Covariance(this.transpose(), true);
         return new Matrix(cov.getCovarianceMatrix());
+    }
 
+    public Matrix variance(int axis) {
+        Variance var = new Variance(false);
+        return this.evaluateUnivariateStatistic(axis, var);
+    }
+
+    public Matrix std(int axis) {
+        StandardDeviation std = new StandardDeviation();
+        return this.evaluateUnivariateStatistic(axis, std);
+    }
+
+    public Matrix flatten() {
+        double[] data = new double[this.getRowDimension() * this.getColumnDimension()];
+        for (int r = 0; r < this.getRowDimension(); r++)
+            for (int c = 0; c < this.getColumnDimension(); c++)
+                data[r * this.getColumnDimension() + c] = this.getEntry(r, c);
+        return new Matrix(data);
     }
 
     public Matrix detrend(int axis, String type) {
@@ -374,13 +452,69 @@ public class Matrix extends Array2DRowRealMatrix {
         Matrix.checkAxis(axis);
         if (axis == 0) {
             int newLength = this.getColumnDimension() + function.length - 1;
-            double [][] data = new double[this.getRowDimension()][newLength];
+            double[][] data = new double[this.getRowDimension()][newLength];
             for (int r = 0; r < this.getRowDimension(); r++) {
                 data[r] = MathArrays.convolve(this.getRow(r), function);
             }
             return new Matrix(data);
         } else {
             return new Matrix(new Matrix(this.transpose()).convolve(function, 0).transpose());
+        }
+    }
+
+    public Matrix removeOutliers(int axis, double lowerThreshold, double upperThreshold, int maxIter, String feat) {
+        Matrix.checkAxis(axis);
+        Matrix.checkString(feat, new String[]{"var", "mu"});
+
+        Matrix m = this;
+        if (maxIter > 1)
+            m = m.removeOutliers(axis, lowerThreshold, upperThreshold, maxIter-1, feat);
+        if (m == null)
+            return m;
+
+        Matrix feature;
+        if (feat.equalsIgnoreCase("var")) {
+            feature = m.variance(axis).abs().sqrt();
+        } else {
+            feature = m.mean(axis);
+        }
+
+        double median = feature.median(-1).getData()[0][0];
+        double std = feature.std(-1).getData()[0][0];
+        double high = median + upperThreshold * std;
+        double low = median + lowerThreshold * std;
+
+        int inlierCount = 0;
+        for (double val : feature.getColumn(0)) {
+            inlierCount += (low < val) && (val < high) ? 1 : 0;
+        }
+
+        if (inlierCount <= 0)
+            return null;
+        else {
+            int index = 0;
+            Matrix ret;
+            if (axis == 0) {
+                ret = new Matrix(m.getRowDimension(), inlierCount);
+                for (int c = 0; c < m.getColumnDimension(); c++) {
+                    double featureValue = feature.getColumn(0)[c];
+                    if (low < featureValue && featureValue < high) {
+                        ret.setColumn(index, m.getColumn(c));
+                        index++;
+                    }
+                }
+            } else {
+                ret = new Matrix(inlierCount, m.getColumnDimension());
+                for (int r = 0; r < m.getRowDimension(); r++) {
+                    double featureValue = feature.getColumn(0)[r];
+                    if (low < featureValue && featureValue < high) {
+                        ret.setRow(index, m.getRow(r));
+                        index++;
+                    }
+                }
+            }
+
+            return ret;
         }
     }
 }
