@@ -381,12 +381,30 @@ public class Matrix extends Array2DRowRealMatrix {
         } else {
             for (int r = 0; r < this.getRowDimension(); r++) {
                 Complex[] complexResult = fft.transform(this.getRow(r), direction);
-                double[] power = new double[complexResult.length];
                 for (int i = 0; i < complexResult.length; i++)
                     ft[r][i] = Math.pow(complexResult[i].abs(), 2.0);
             }
         }
         return new Matrix(ft);
+    }
+
+    public Complex[][] fftComplex(int axis, TransformType direction) {
+        Matrix.checkAxis(axis);
+        // FIXME which normalization to use?
+        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+        Complex[][] ft = new Complex[this.getRowDimension()][this.getColumnDimension()];
+        if (axis == 0) {
+            for (int c = 0; c < this.getColumnDimension(); c++) {
+                Complex[] complexResult = fft.transform(this.getColumn(c), direction);
+                for (int i = 0; i < complexResult.length; i++)
+                    ft[i][c] = complexResult[i];
+            }
+        } else {
+            for (int r = 0; r < this.getRowDimension(); r++) {
+                ft[r] = fft.transform(this.getRow(r), direction);
+            }
+        }
+        return ft;
     }
 
     public Tuple<Matrix, RealVector> eig() {
@@ -516,5 +534,50 @@ public class Matrix extends Array2DRowRealMatrix {
 
             return ret;
         }
+    }
+
+    public Matrix welch() {
+        int nfft = 4;
+        int stepSize = 1;
+        final double scale = 2./3.;
+        int rows = this.getRowDimension();
+        int columns = this.getColumnDimension();
+        int nperseq = Math.min(columns, 255);
+        Matrix detrended = this.detrend(1, "constant");
+        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+        Matrix Pxx = null;
+        if (nfft % 2 == 0) {
+            final int pxxColumns = (nfft / 2) + 1;
+            for (int i = 0; i < (columns - nperseq + 1); i++) {
+                int step = stepSize * i;
+                Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step + nperseq - 1));
+                Complex[][] xft = x_dt.fftComplex(1, TransformType.FORWARD);
+                Pxx = new Matrix(rows, pxxColumns);
+                for (int r = 0; r < xft.length; r++) {
+                    double val = xft[r][0].pow(2).getReal();
+                    Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
+                    val = xft[r][pxxColumns].pow(2).getReal();
+                    Pxx.setEntry(r, pxxColumns-1, Double.isNaN(val) ? 0.0 : val);
+                    for (int c = 1; c < pxxColumns - 1; c += 2) {
+                        val = xft[r][c].pow(2).getReal() + xft[r][c+1].pow(2).getReal();
+                        Pxx.setEntry(r, c, Pxx.getEntry(r, c) + (Double.isNaN(val) ? 0.0 : val));
+                    }
+                }
+                Pxx.scalarMultiply(1.0 / (columns - nperseq + 1));
+                System.out.println(Pxx);
+            }
+            assert Pxx != null;
+            Pxx.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+                public double visit(int row, int column, double value) {
+                    if (column == 0 || column == (pxxColumns-1))
+                        return value * scale;
+                    else
+                        return value * 2.0 * scale;
+                }
+            });
+        } else {
+            // TODO welch method with uneven dim
+        }
+        return Pxx;
     }
 }

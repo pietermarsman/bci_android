@@ -4,18 +4,23 @@ import edu.nl.ru.linalg.Matrix;
 import edu.nl.ru.miscellaneous.Triple;
 import edu.nl.ru.miscellaneous.Tuple;
 import junit.framework.TestCase;
+import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.RealVector;
 
 public class MatrixTest extends TestCase {
 
-    Matrix a, b;
+    Matrix a, b, c, d;
 
 
     protected void setUp() throws Exception {
         double[][] dataA = {{1.0, 2.0}, {5.0, 4.0}};
         double[][] dataB = {{0.5, 0.4, 0.2}, {0.3, 0.2, 0.2}, {.2, .2, .7}};
+        double[][] dataC = {{1.2, -1232.0}, {-67.5, .232}};
+        double[][] dataD = {{1.2, 23., 12., 12.}, {12., 43., 432., 23.}, {3., 23.2, -12., -3.2}, {1., 1., 2., 2.}};
         a = new Matrix(dataA);
         b = new Matrix(dataB);
+        c = new Matrix(dataC);
+        d = new Matrix(dataD);
     }
 
     public void testMeanAll() throws Exception {
@@ -162,9 +167,10 @@ public class MatrixTest extends TestCase {
     }
 
     public void testEig() throws Exception {
+        // todo slight difference with python
         Tuple<Matrix, RealVector> eig = b.eig();
         double[] goodValues = {.993, .439, -0.032};
-        double[][] goodVector = {{-0.604, -0.666, 0.584}, {-0.402, -0.249, -0.808}, {-0.687, 0.702, 0.061}};
+        double[][] goodVector = {{0.604, 0.674, 0.59}, {0.402, .252, -0.810}, {0.687, -0.709, 0.061}};
         assertEquals(new Matrix(new Matrix(goodValues)).round(2), new Matrix(eig.y.toArray()).round(2));
         assertEquals(new Matrix(goodVector).round(2), eig.x.round(2));
     }
@@ -190,6 +196,53 @@ public class MatrixTest extends TestCase {
         Matrix conv = b.convolve(a.getRow(0), 1);
         double[][] goodValues = {{.5, .4, .2}, {1.3, 1., .6}, {.8, .6, 1.1}, {.4, .4, 1.4}};
         assertEquals(new Matrix(goodValues).round(2), conv.round(2));
+    }
+
+    public void testVar() throws Exception {
+        Matrix var = b.variance(-1);
+        double[] goodValues = {.028};
+        assertEquals(new Matrix(goodValues).round(3), var.round(3));
+    }
+
+    public void testVar0() throws Exception {
+        Matrix var = b.variance(0);
+        double[] goodValues = {.0155, .0088, .0555};
+        assertEquals(new Matrix(goodValues).round(3), var.round(3));
+    }
+
+    public void testVar1() throws Exception {
+        Matrix var = b.variance(1);
+        double[] goodValues = {.0155, .0022, .0555};
+        assertEquals(new Matrix(goodValues).round(3), var.round(3));
+    }
+
+    public void testAbs() throws Exception {
+        Matrix abs = c.abs();
+        abs.walkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {
+            public void visit(int row, int column, double value) {
+                assertTrue(value >= 0);
+            }
+        });
+    }
+
+    public void testOutlierRemoval0() throws Exception {
+        Matrix ret = b.removeOutliers(0, -1., 1., 3, "var");
+        assertTrue(ret.getRowDimension() == 3);
+        assertTrue(ret.getColumnDimension() == 2);
+    }
+
+    public void testOutlierRemoval1() throws Exception {
+        // todo python implemenation is not right
+        // todo using mu is not properly tested. All the rows/columns are deleted.
+        Matrix ret = b.removeOutliers(1, -1., 1., 3, "var");
+        assertTrue(ret.getRowDimension() == 2);
+        assertTrue(ret.getColumnDimension() == 3);
+    }
+
+    public void testWelch() throws Exception {
+        Matrix ret = d.welch();
+        double[][] goodValues = new double[][]{{0., 627.84, -2.906}, {0., 425178.667, 117333.33}, {0., 492.053, -314.640}, {0., 0., 0.}};
+        assertEquals(new Matrix(goodValues).round(2), ret.round(2));
     }
 
 }
