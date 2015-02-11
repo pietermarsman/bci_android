@@ -1,7 +1,10 @@
 package edu.nl.ru.linalg;
 
+import edu.nl.ru.miscellaneous.ExtraMath;
 import edu.nl.ru.miscellaneous.Triple;
 import edu.nl.ru.miscellaneous.Tuple;
+import edu.nl.ru.miscellaneous.Windows;
+import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -84,7 +87,7 @@ public class Matrix extends Array2DRowRealMatrix {
             throw new IllegalArgumentException("Times should be bigger than 0 but it is " + repeats);
     }
 
-    public static void checkDecimals(int decimals) {
+    public static void checkNonNegative(int decimals) {
         if (decimals < 0)
             throw new IllegalArgumentException("The number of decimals should be bigger than 0");
     }
@@ -104,6 +107,11 @@ public class Matrix extends Array2DRowRealMatrix {
         if (lowerThreshold > upperThreshold)
             throw new IllegalArgumentException("Lower threshold (=" + lowerThreshold + ") should be lower than upper " +
                     "threshold (=" + upperThreshold + ")");
+    }
+
+    public static void checkEquals(int a, int b) throws  IllegalArgumentException{
+        if (a != b)
+            throw new IllegalArgumentException("Should be equal but are not: " + a + " and " + b);
     }
 
     public static Matrix zeros(int dim0, int dim1) {
@@ -145,7 +153,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix round(int decimals) {
-        Matrix.checkDecimals(decimals);
+        Matrix.checkNonNegative(decimals);
         double[][] data = this.getData();
         double factor = Math.pow(10, decimals);
         for (int i = 0; i < data.length; i++)
@@ -241,6 +249,18 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix median(int axis) {
         Median med = new Median();
         return this.evaluateUnivariateStatistic(axis, med);
+    }
+
+    public Matrix multipleElements(final Matrix b) {
+        Matrix.checkEquals(this.getRowDimension(), b.getRowDimension());
+        Matrix.checkEquals(this.getColumnDimension(), b.getColumnDimension());
+        RealMatrix c = this.copy();
+        c.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+            public double visit(int row, int column, double value) {
+                return value *  b.getEntry(row, column);
+            }
+        });
+        return new Matrix(c);
     }
 
     public Matrix evaluateUnivariateStatistic(int axis, AbstractUnivariateStatistic stat) {
@@ -395,13 +415,19 @@ public class Matrix extends Array2DRowRealMatrix {
         Complex[][] ft = new Complex[this.getRowDimension()][this.getColumnDimension()];
         if (axis == 0) {
             for (int c = 0; c < this.getColumnDimension(); c++) {
+                // FIXME use data lengths with powers of 2
                 Complex[] complexResult = fft.transform(this.getColumn(c), direction);
                 for (int i = 0; i < complexResult.length; i++)
                     ft[i][c] = complexResult[i];
             }
         } else {
             for (int r = 0; r < this.getRowDimension(); r++) {
-                ft[r] = fft.transform(this.getRow(r), direction);
+                double row[] = new double[(int) Math.pow(Math.ceil(ExtraMath.log(this.getRowDimension(), 2)), 2)];
+                for (int c = 0; c < this.getColumnDimension(); c++)
+                    row[c] = this.getEntry(r, c);
+                Complex[] fftResult = fft.transform(row, direction);
+                for (int c = 0; c < this.getColumnDimension(); c++)
+                    ft[r][c] = fftResult[c];
             }
         }
         return ft;
@@ -536,23 +562,47 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
-    public Matrix welch() {
-        int nfft = 4;
-        int stepSize = 1;
-        final double scale = 2./3.;
+    public Matrix welch(int nperseq, String scaling, String detrend) {
+        // TODO use window size
+        // Checks
+        Matrix.checkNonNegative(nperseq);
+        Matrix.checkString(scaling, new String[]{"density", "spectrum"});
+
+        // Abreviations
         int rows = this.getRowDimension();
         int columns = this.getColumnDimension();
-        int nperseq = Math.min(columns, 255);
-        Matrix detrended = this.detrend(1, "constant");
+
+        // Section size
+        nperseq = Math.min(columns, nperseq);
+
+        // Window
+        // FIXME use other value for window
+        double halfWay = ((double) nperseq - 1) / 2.0;
+        Matrix window = Windows.gaussianWindow(nperseq, halfWay, halfWay).repeat(rows, 1); // Gaussian
+
+        // Scaling
+        final double scale;
+        if (scaling.equalsIgnoreCase("density"))
+            scale = 1.0 / window.transpose().multiply(window).getEntry(0, 0);
+        else
+            scale = 1.0 / Math.pow((window.sum().getEntry(0, 0)), 2);
+
+        // Size of the fft
+        int nfft = nperseq;
+
+        // Only allow stepsize 1
+        int stepSize = 1;
+
+        Matrix detrended = this.detrend(1, detrend);
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         Matrix Pxx = null;
         if (nfft % 2 == 0) {
             final int pxxColumns = (nfft / 2) + 1;
+            Pxx = new Matrix(rows, pxxColumns);
             for (int i = 0; i < (columns - nperseq + 1); i++) {
                 int step = stepSize * i;
                 Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step + nperseq - 1));
                 Complex[][] xft = x_dt.fftComplex(1, TransformType.FORWARD);
-                Pxx = new Matrix(rows, pxxColumns);
                 for (int r = 0; r < xft.length; r++) {
                     double val = xft[r][0].pow(2).getReal();
                     Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
@@ -560,24 +610,42 @@ public class Matrix extends Array2DRowRealMatrix {
                     Pxx.setEntry(r, pxxColumns-1, Double.isNaN(val) ? 0.0 : val);
                     for (int c = 1; c < pxxColumns - 1; c += 2) {
                         val = xft[r][c].pow(2).getReal() + xft[r][c+1].pow(2).getReal();
-                        Pxx.setEntry(r, c, Pxx.getEntry(r, c) + (Double.isNaN(val) ? 0.0 : val));
+                        Pxx.addToEntry(r, c, (Double.isNaN(val) ? 0.0 : val));
                     }
                 }
                 Pxx.scalarMultiply(1.0 / (columns - nperseq + 1));
-                System.out.println(Pxx);
             }
-            assert Pxx != null;
-            Pxx.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
-                public double visit(int row, int column, double value) {
-                    if (column == 0 || column == (pxxColumns-1))
-                        return value * scale;
-                    else
-                        return value * 2.0 * scale;
-                }
-            });
         } else {
-            // TODO welch method with uneven dim
+            final int pxxColumns = (nfft + 1) / 2;
+            Pxx = new Matrix(rows, pxxColumns);
+            for (int i = 0; i < (columns - nperseq + 1); i++) {
+                int step = stepSize * i;
+                Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step+nperseq - 1));
+                final Gaussian gaussian = new Gaussian(((double) nperseq) / 2., ((double) nperseq) / 2.);
+                x_dt.multipleElements(window);
+                // FIXME due to the padding in the fft the xft values differ
+                Complex[][] xft = x_dt.fftComplex(1, TransformType.FORWARD);
+                for (int r = 0; r < xft.length; r++) {
+                    double val =xft[r][0].pow(2).getReal();
+                    Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
+                    for (int c = 1; c < pxxColumns; c += 2) {
+                        val = xft[r][c].pow(2).getReal() + xft[r][c+1].pow(2).getReal();
+                        Pxx.addToEntry(r, c, Double.isNaN(val) ? 0.0 : val);
+                    }
+                }
+            }
+            Pxx.scalarMultiply(1.0 / (columns - nperseq + 1));
         }
+        assert Pxx != null;
+        final int pxxColumns = Pxx.getColumnDimension();
+        Pxx.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+            public double visit(int row, int column, double value) {
+                if (column == 0 || column == (pxxColumns - 1))
+                    return value * scale;
+                else
+                    return value * 2.0 * scale;
+            }
+        });
         return Pxx;
     }
 }
