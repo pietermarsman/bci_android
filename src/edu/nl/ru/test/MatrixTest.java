@@ -247,6 +247,7 @@ public class MatrixTest extends TestCase {
     public void testWelchUneven() throws Exception {
         Matrix ret = b.welch(256, "density", "constant");
         // TODO check if it is correct answer
+        assertEquals(true, ret);
     }
 
 }

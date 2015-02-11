@@ -4,7 +4,6 @@ import edu.nl.ru.miscellaneous.ExtraMath;
 import edu.nl.ru.miscellaneous.Triple;
 import edu.nl.ru.miscellaneous.Tuple;
 import edu.nl.ru.miscellaneous.Windows;
-import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -578,7 +577,7 @@ public class Matrix extends Array2DRowRealMatrix {
         // Window
         // FIXME use other value for window
         double halfWay = ((double) nperseq - 1) / 2.0;
-        Matrix window = Windows.gaussianWindow(nperseq, halfWay, halfWay).repeat(rows, 1); // Gaussian
+        Matrix window = new Matrix(Windows.gaussianWindow(nperseq, halfWay).transpose()).repeat(rows, 0); // Gaussian
 
         // Scaling
         final double scale;
@@ -599,6 +598,7 @@ public class Matrix extends Array2DRowRealMatrix {
         if (nfft % 2 == 0) {
             final int pxxColumns = (nfft / 2) + 1;
             Pxx = new Matrix(rows, pxxColumns);
+            // For each averaging window
             for (int i = 0; i < (columns - nperseq + 1); i++) {
                 int step = stepSize * i;
                 Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step + nperseq - 1));
@@ -606,7 +606,7 @@ public class Matrix extends Array2DRowRealMatrix {
                 for (int r = 0; r < xft.length; r++) {
                     double val = xft[r][0].pow(2).getReal();
                     Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
-                    val = xft[r][pxxColumns].pow(2).getReal();
+                    val = xft[r][pxxColumns-1].pow(2).getReal();
                     Pxx.setEntry(r, pxxColumns-1, Double.isNaN(val) ? 0.0 : val);
                     for (int c = 1; c < pxxColumns - 1; c += 2) {
                         val = xft[r][c].pow(2).getReal() + xft[r][c+1].pow(2).getReal();
@@ -618,13 +618,13 @@ public class Matrix extends Array2DRowRealMatrix {
         } else {
             final int pxxColumns = (nfft + 1) / 2;
             Pxx = new Matrix(rows, pxxColumns);
+            // For each averaging window
             for (int i = 0; i < (columns - nperseq + 1); i++) {
                 int step = stepSize * i;
                 Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step+nperseq - 1));
-                final Gaussian gaussian = new Gaussian(((double) nperseq) / 2., ((double) nperseq) / 2.);
-                x_dt.multipleElements(window);
+                Matrix windowed_xdt = x_dt.multipleElements(window);
                 // FIXME due to the padding in the fft the xft values differ
-                Complex[][] xft = x_dt.fftComplex(1, TransformType.FORWARD);
+                Complex[][] xft = windowed_xdt.fftComplex(1, TransformType.FORWARD);
                 for (int r = 0; r < xft.length; r++) {
                     double val =xft[r][0].pow(2).getReal();
                     Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
