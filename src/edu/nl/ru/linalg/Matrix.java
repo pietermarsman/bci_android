@@ -1,9 +1,6 @@
 package edu.nl.ru.linalg;
 
-import edu.nl.ru.miscellaneous.ExtraMath;
-import edu.nl.ru.miscellaneous.Triple;
-import edu.nl.ru.miscellaneous.Tuple;
-import edu.nl.ru.miscellaneous.Windows;
+import edu.nl.ru.miscellaneous.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -16,8 +13,6 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.MathArrays;
-
-import java.util.Arrays;
 
 import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.getSortIdx;
 import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.reverseDoubleArrayInPlace;
@@ -70,49 +65,6 @@ public class Matrix extends Array2DRowRealMatrix {
         super(m.getData());
     }
 
-    public static void checkString(String given, String[] options) {
-        if (!(Arrays.asList(options).contains(given))) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Type should be in [");
-            for (String option : options)
-                sb.append(option).append(", ");
-            sb.append("] but is ").append(given);
-            throw new IllegalArgumentException(sb.toString());
-        }
-    }
-
-    public static void checkRepeats(int repeats) {
-        if (repeats < 1)
-            throw new IllegalArgumentException("Times should be bigger than 0 but it is " + repeats);
-    }
-
-    public static void checkNonNegative(int decimals) {
-        if (decimals < 0)
-            throw new IllegalArgumentException("The number of decimals should be bigger than 0");
-    }
-
-    public static void checkAxis(int axis) throws IllegalArgumentException {
-        Matrix.checkAxis(axis, false);
-    }
-
-    public static void checkAxis(int axis, boolean allowMinOne) throws IllegalArgumentException {
-        if (axis < -1 || axis > 1)
-            if (!(allowMinOne && axis == -1))
-                throw new IllegalArgumentException("Axis should be 0 or 1 but is " + axis);
-    }
-
-    public static void checkLowerUpperThreshold(double lowerThreshold, double upperThreshold) throws
-            IllegalArgumentException {
-        if (lowerThreshold > upperThreshold)
-            throw new IllegalArgumentException("Lower threshold (=" + lowerThreshold + ") should be lower than upper " +
-                    "threshold (=" + upperThreshold + ")");
-    }
-
-    public static void checkEquals(int a, int b) throws  IllegalArgumentException{
-        if (a != b)
-            throw new IllegalArgumentException("Should be equal but are not: " + a + " and " + b);
-    }
-
     public static Matrix zeros(int dim0, int dim1) {
         double[][] zeros = new double[dim0][dim1];
         return new Matrix(zeros);
@@ -147,12 +99,12 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public int getDimension(int axis) {
-        Matrix.checkAxis(axis);
+        ParameterChecker.checkAxis(axis);
         return axis == 0 ? this.getRowDimension() : this.getColumnDimension();
     }
 
     public Matrix round(int decimals) {
-        Matrix.checkNonNegative(decimals);
+        ParameterChecker.checkNonNegative(decimals);
         double[][] data = this.getData();
         double factor = Math.pow(10, decimals);
         for (int i = 0; i < data.length; i++)
@@ -180,8 +132,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix repeat(int repeats, int axis) {
-        Matrix.checkAxis(axis);
-        Matrix.checkRepeats(repeats);
+        ParameterChecker.checkAxis(axis);
+        ParameterChecker.checkRepeats(repeats);
         int rows = this.getRowDimension();
         int columns = this.getColumnDimension();
         if (axis == 0)
@@ -251,8 +203,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix multipleElements(final Matrix b) {
-        Matrix.checkEquals(this.getRowDimension(), b.getRowDimension());
-        Matrix.checkEquals(this.getColumnDimension(), b.getColumnDimension());
+        ParameterChecker.checkEquals(this.getRowDimension(), b.getRowDimension());
+        ParameterChecker.checkEquals(this.getColumnDimension(), b.getColumnDimension());
         RealMatrix c = this.copy();
         c.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
             public double visit(int row, int column, double value) {
@@ -263,7 +215,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix evaluateUnivariateStatistic(int axis, AbstractUnivariateStatistic stat) {
-        Matrix.checkAxis(axis, true);
+        ParameterChecker.checkAxis(axis, true);
         double[] data;
         if (axis == -1) {
             return this.flatten().evaluateUnivariateStatistic(0, stat);
@@ -340,8 +292,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix detrend(int axis, String type) {
-        Matrix.checkAxis(axis);
-        Matrix.checkString(type, new String[]{"constant", "linear"});
+        ParameterChecker.checkAxis(axis);
+        ParameterChecker.checkString(type, new String[]{"constant", "linear"});
         if (type.equalsIgnoreCase("constant")) {
             Matrix mean = this.mean(axis);
             int otherAxis = axis == 0 ? 1 : 0;
@@ -387,7 +339,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix fft(int axis, TransformType direction) {
-        Matrix.checkAxis(axis);
+        ParameterChecker.checkAxis(axis);
         // FIXME which normalization to use?
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         double[][] ft = new double[this.getRowDimension()][this.getColumnDimension()];
@@ -408,7 +360,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Complex[][] fftComplex(int axis, TransformType direction) {
-        Matrix.checkAxis(axis);
+        ParameterChecker.checkAxis(axis);
         // FIXME which normalization to use?
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         Complex[][] ft = new Complex[this.getRowDimension()][this.getColumnDimension()];
@@ -439,7 +391,7 @@ public class Matrix extends Array2DRowRealMatrix {
     public Tuple<Matrix, RealVector> eig(String order) {
         // FIXME is returning negative of python implementation
         // FIXME slightly different from python implementation
-        Matrix.checkString(order, new String[]{"descending", "ascending"});
+        ParameterChecker.checkString(order, new String[]{"descending", "ascending"});
         EigenDecomposition eig = new EigenDecomposition(this);
         RealMatrix oldVecs = new Array2DRowRealMatrix(eig.getV().getData());
         double[] oldVals = eig.getRealEigenvalues();
@@ -472,7 +424,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix spatialFilter(String type, double whitenThres) {
-        Matrix.checkString(type, new String[]{"car", "whiten"});
+        ParameterChecker.checkString(type, new String[]{"car", "whiten"});
         if (type.equalsIgnoreCase("car")) {
             return new Matrix(this.preMultiply(Matrix.car(this.getRowDimension())));
         } else {
@@ -492,7 +444,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix convolve(double[] function, int axis) {
-        Matrix.checkAxis(axis);
+        ParameterChecker.checkAxis(axis);
         if (axis == 0) {
             int newLength = this.getColumnDimension() + function.length - 1;
             double[][] data = new double[this.getRowDimension()][newLength];
@@ -506,8 +458,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix removeOutliers(int axis, double lowerThreshold, double upperThreshold, int maxIter, String feat) {
-        Matrix.checkAxis(axis);
-        Matrix.checkString(feat, new String[]{"var", "mu"});
+        ParameterChecker.checkAxis(axis);
+        ParameterChecker.checkString(feat, new String[]{"var", "mu"});
 
         Matrix m = this;
         if (maxIter > 1)
@@ -564,8 +516,8 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix welch(int nperseq, String scaling, String detrend) {
         // TODO use window size
         // Checks
-        Matrix.checkNonNegative(nperseq);
-        Matrix.checkString(scaling, new String[]{"density", "spectrum"});
+        ParameterChecker.checkNonNegative(nperseq);
+        ParameterChecker.checkString(scaling, new String[]{"density", "spectrum"});
 
         // Abreviations
         int rows = this.getRowDimension();
