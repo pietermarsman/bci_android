@@ -551,7 +551,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
         // Create W
         int wWidth, wHeight;
-        int reducedDim = (int) Math.round(((Math.ceil(((double) width-1) / 2) + 1)));
+        int reducedDim = (int) Math.round(((Math.ceil(((double) width - 1) / 2) + 1)));
         if (dim == 0) {
             wHeight = reducedDim;
             wWidth = this.getColumnDimension();
@@ -565,15 +565,14 @@ public class Matrix extends Array2DRowRealMatrix {
         ArrayList<int[]> idx = new ArrayList<int[]>();
         idx.add(Matrix.range(0, this.getRowDimension(), 1));
         idx.add(Matrix.range(0, this.getColumnDimension(), 1));
-        ArrayList<int[]> wIdx = (ArrayList<int[]>) idx.clone();
+        ArrayList<int[]> wIdx = new ArrayList<int[]>();
+        wIdx.add(Matrix.range(0, wHeight, 1));
+        wIdx.add(Matrix.range(0, wWidth, 1));
 
         // Sum over the windows
         for (int wi : start) {
             // Window the dimension
-            int[] range = Matrix.range(0, width, 1);
-            for (int i = 0; i < range.length; i++)
-                range[i] += wi;
-            idx.set(dim, range);
+            idx.set(dim, Matrix.range(wi, wi+width, 1));
 
             // Get submatrix
             Matrix wX = new Matrix(this.getSubMatrix(idx.get(0), idx.get(1)));
@@ -597,9 +596,9 @@ public class Matrix extends Array2DRowRealMatrix {
 
             // Fourier
             wX = new Matrix(wX.fft(dim).scalarMultiply(2.0));
-            System.out.println(wX);
 
-            // FIXME positive frequency only??
+            // Positive frequency only
+            wX = new Matrix(wX.getSubMatrix(wIdx.get(0), wIdx.get(1)));
 
             switch (outType) {
                 case AMPLITUDE:
