@@ -1,9 +1,6 @@
 package edu.nl.ru.linalg;
 
-import edu.nl.ru.miscellaneous.ExtraMath;
-import edu.nl.ru.miscellaneous.ParameterChecker;
-import edu.nl.ru.miscellaneous.Triple;
-import edu.nl.ru.miscellaneous.Tuple;
+import edu.nl.ru.miscellaneous.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -197,7 +194,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix sqrt() {
         Matrix m = new Matrix(this.copy());
-        m.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor(){
+        m.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
             @Override
             public double visit(int row, int column, double value) {
                 return Math.sqrt(value);
@@ -235,7 +232,7 @@ public class Matrix extends Array2DRowRealMatrix {
         RealMatrix c = this.copy();
         c.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
             public double visit(int row, int column, double value) {
-                return value *  b.getEntry(row, column);
+                return value * b.getEntry(row, column);
             }
         });
         return new Matrix(c);
@@ -246,8 +243,7 @@ public class Matrix extends Array2DRowRealMatrix {
         double[] data;
         if (axis == -1) {
             return this.flatten().evaluateUnivariateStatistic(0, stat);
-        }
-        else if (axis == 0) {
+        } else if (axis == 0) {
             data = new double[this.getColumnDimension()];
             for (int c = 0; c < this.getColumnDimension(); c++)
                 data[c] = stat.evaluate(this.getColumn(c));
@@ -490,7 +486,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
         Matrix m = this;
         if (maxIter > 1)
-            m = m.removeOutliers(axis, lowerThreshold, upperThreshold, maxIter-1, feat);
+            m = m.removeOutliers(axis, lowerThreshold, upperThreshold, maxIter - 1, feat);
         if (m == null)
             return m;
 
@@ -572,7 +568,7 @@ public class Matrix extends Array2DRowRealMatrix {
         // Sum over the windows
         for (int wi : start) {
             // Window the dimension
-            idx.set(dim, Matrix.range(wi, wi+width, 1));
+            idx.set(dim, Matrix.range(wi, wi + width, 1));
 
             // Get submatrix
             Matrix wX = new Matrix(this.getSubMatrix(idx.get(0), idx.get(1)));

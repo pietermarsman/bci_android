@@ -127,4 +127,15 @@ public class Classifier {
         }
         return new Matrix(result);
     }
+
+    public int computeSampleWidth(double samplingFrequency, double widthMs) {
+        return (int) Math.floor(widthMs * (samplingFrequency / 1000.));
+    }
+
+    public int[] computeSampleStarts(double samplingFrequency, double[] startMs) {
+        int[] sampleStarts = new int[startMs.length];
+        for (int i=0; i < startMs.length; i++)
+            sampleStarts[i] = (int) Math.floor(startMs[i] * (samplingFrequency / 1000.));
+        return sampleStarts;
+    }
 }

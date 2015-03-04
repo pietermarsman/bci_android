@@ -241,10 +241,11 @@ public class MatrixTest extends TestCase {
         assertTrue(ret.getColumnDimension() == 3);
     }
 
-    public void testWelchEven() throws Exception {
+    public void testWelch() throws Exception {
         Matrix ret = e.welch(1, new double[]{.382, 1., 1., .382}, new int[]{0, 2}, 4, false);
         double[][] good = new double[][]{{173.3378, 140.7474, 156.7158}, {551.7926, 354.3962, 85.6544}, {828.5935, 709.1306, 757.4176}};
         assertEquals(new Matrix(good).round(1), ret.round(1));
         // TODO check if it is correct answer
     }
+
 }
