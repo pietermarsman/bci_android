@@ -86,6 +86,26 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(Matrix.eye(size).scalarAdd(-1.0 / ((double) size)));
     }
 
+    public static int[] range(int start, int end, int step) {
+        ParameterChecker.checkNonZero(step);
+        int size = (end - start) / step;
+        int[] arr = new int[size];
+        int index = 0;
+        for (int i = start; i < end; i += step)
+            arr[index] = i;
+        return arr;
+    }
+
+    public static Matrix range(double start, double end, double step) {
+        ParameterChecker.checkNonZero(step);
+        int size = (int) ((end - start) / step);
+        double[] arr = new double[size];
+        int index = 0;
+        for (double i = start; i < end; i += step)
+            arr[index] = i;
+        return new Matrix(arr);
+    }
+
     public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append(this.getClass().getSimpleName()).append("\n");
@@ -515,6 +535,8 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix welch(int nperseq, String scaling, String detrend) {
         // TODO use window size
+        // TODO use ave type (or outType)
+
         // Checks
         ParameterChecker.checkNonNegative(nperseq);
         ParameterChecker.checkString(scaling, new String[]{"density", "spectrum"});

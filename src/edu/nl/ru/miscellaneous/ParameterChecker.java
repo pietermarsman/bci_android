@@ -27,6 +27,11 @@ public class ParameterChecker {
             throw new IllegalArgumentException("The number of decimals should be bigger than 0");
     }
 
+    public static void checkNonZero(double number) {
+        if (number == 0.0)
+            throw  new IllegalArgumentException("Number should not be zoro.");
+    }
+
     public static void checkAxis(int axis) throws IllegalArgumentException {
         checkAxis(axis, false);
     }
