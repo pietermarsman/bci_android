@@ -87,7 +87,7 @@ public class Classifier {
         // 6) Convert to spectral
         if (data.getColumnDimension() > windowFn.getRowDimension()) {
             // FIXME other parameters used for welch
-            data = data.welch(windowLength, "density", "linear");
+//            data = data.welch(windowLength, "density", "linear");
         }
 
         // 7) Select subset of frequency range (we care about)

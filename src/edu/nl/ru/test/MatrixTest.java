@@ -240,14 +240,8 @@ public class MatrixTest extends TestCase {
     }
 
     public void testWelchEven() throws Exception {
-        Matrix ret = d.welch(256, "density", "constant");
+        Matrix ret = d.welch(0, new double[]{1., 1.}, new int[]{0, 1, 2}, 2, false);
         // TODO check if it is correct answer
-    }
-
-    public void testWelchUneven() throws Exception {
-        Matrix ret = b.welch(256, "density", "constant");
-        // TODO check if it is correct answer
-        assertEquals(true, ret);
     }
 
 }

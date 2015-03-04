@@ -1,6 +1,9 @@
 package edu.nl.ru.linalg;
 
-import edu.nl.ru.miscellaneous.*;
+import edu.nl.ru.miscellaneous.ExtraMath;
+import edu.nl.ru.miscellaneous.ParameterChecker;
+import edu.nl.ru.miscellaneous.Triple;
+import edu.nl.ru.miscellaneous.Tuple;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -13,6 +16,8 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.MathArrays;
+
+import java.util.ArrayList;
 
 import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.getSortIdx;
 import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.reverseDoubleArrayInPlace;
@@ -91,8 +96,10 @@ public class Matrix extends Array2DRowRealMatrix {
         int size = (end - start) / step;
         int[] arr = new int[size];
         int index = 0;
-        for (int i = start; i < end; i += step)
+        for (int i = start; i < end; i += step) {
             arr[index] = i;
+            index++;
+        }
         return arr;
     }
 
@@ -533,93 +540,76 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
-    public Matrix welch(int nperseq, String scaling, String detrend) {
-        // TODO use window size
-        // TODO use ave type (or outType)
+    public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendp) {
+        // TODO add outtype, default is 'amp'
+        WelchOutputType outType = WelchOutputType.AMPLITUDE;
 
-        // Checks
-        ParameterChecker.checkNonNegative(nperseq);
-        ParameterChecker.checkString(scaling, new String[]{"density", "spectrum"});
+        // Abbreviations
+        int otherDim = dim == 0 ? 1 : 0;
+        int sizeDim = this.getDimension(dim);
+        int sizeOtherDim = this.getDimension(otherDim);
 
-        // Abreviations
-        int rows = this.getRowDimension();
-        int columns = this.getColumnDimension();
-
-        // Section size
-        nperseq = Math.min(columns, nperseq);
-
-        // Window
-        // FIXME use other value for window
-        double halfWay = ((double) nperseq - 1) / 2.0;
-        Matrix window = new Matrix(Windows.gaussianWindow(nperseq, halfWay).transpose()).repeat(rows, 0); // Gaussian
-
-        // Scaling
-        final double scale;
-        if (scaling.equalsIgnoreCase("density"))
-            scale = 1.0 / window.transpose().multiply(window).getEntry(0, 0);
-        else
-            scale = 1.0 / Math.pow((window.sum().getEntry(0, 0)), 2);
-
-        // Size of the fft
-        int nfft = nperseq;
-
-        // Only allow stepsize 1
-        int stepSize = 1;
-
-        Matrix detrended = this.detrend(1, detrend);
-        FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
-        Matrix Pxx = null;
-        if (nfft % 2 == 0) {
-            final int pxxColumns = (nfft / 2) + 1;
-            Pxx = new Matrix(rows, pxxColumns);
-            // For each averaging window
-            for (int i = 0; i < (columns - nperseq + 1); i++) {
-                int step = stepSize * i;
-                Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step + nperseq - 1));
-                Complex[][] xft = x_dt.fftComplex(1, TransformType.FORWARD);
-                for (int r = 0; r < xft.length; r++) {
-                    double val = xft[r][0].pow(2).getReal();
-                    Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
-                    val = xft[r][pxxColumns-1].pow(2).getReal();
-                    Pxx.setEntry(r, pxxColumns-1, Double.isNaN(val) ? 0.0 : val);
-                    for (int c = 1; c < pxxColumns - 1; c += 2) {
-                        val = xft[r][c].pow(2).getReal() + xft[r][c+1].pow(2).getReal();
-                        Pxx.addToEntry(r, c, (Double.isNaN(val) ? 0.0 : val));
-                    }
-                }
-                Pxx.scalarMultiply(1.0 / (columns - nperseq + 1));
-            }
+        // Create W
+        int wWidth, wHeight;
+        int reducedDim = (int) Math.round(((Math.ceil(((double) width-1) / 2) + 1)));
+        if (dim == 0) {
+            wHeight = reducedDim;
+            wWidth = this.getColumnDimension();
         } else {
-            final int pxxColumns = (nfft + 1) / 2;
-            Pxx = new Matrix(rows, pxxColumns);
-            // For each averaging window
-            for (int i = 0; i < (columns - nperseq + 1); i++) {
-                int step = stepSize * i;
-                Matrix x_dt = new Matrix(detrended.getSubMatrix(0, rows-1, step, step+nperseq - 1));
-                Matrix windowed_xdt = x_dt.multipleElements(window);
-                // FIXME due to the padding in the fft the xft values differ
-                Complex[][] xft = windowed_xdt.fftComplex(1, TransformType.FORWARD);
-                for (int r = 0; r < xft.length; r++) {
-                    double val =xft[r][0].pow(2).getReal();
-                    Pxx.setEntry(r, 0, Double.isNaN(val) ? 0.0 : val);
-                    for (int c = 1; c < pxxColumns; c += 2) {
-                        val = xft[r][c].pow(2).getReal() + xft[r][c+1].pow(2).getReal();
-                        Pxx.addToEntry(r, c, Double.isNaN(val) ? 0.0 : val);
-                    }
-                }
-            }
-            Pxx.scalarMultiply(1.0 / (columns - nperseq + 1));
+            wHeight = this.getRowDimension();
+            wWidth = reducedDim;
         }
-        assert Pxx != null;
-        final int pxxColumns = Pxx.getColumnDimension();
-        Pxx.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
-            public double visit(int row, int column, double value) {
-                if (column == 0 || column == (pxxColumns - 1))
-                    return value * scale;
-                else
-                    return value * 2.0 * scale;
+        Matrix W = Matrix.zeros(wHeight, wWidth);
+
+        // Create indexes
+        ArrayList<int[]> idx = new ArrayList<int[]>();
+        idx.add(Matrix.range(0, this.getRowDimension(), 1));
+        idx.add(Matrix.range(0, this.getColumnDimension(), 1));
+        ArrayList<int[]> wIdx = (ArrayList<int[]>) idx.clone();
+
+        // Sum over the windows
+        for (int wi : start) {
+            // Window the dimension
+            int[] range = Matrix.range(0, width, 1);
+            for (int i = 0; i < range.length; i++)
+                range[i] += wi;
+            idx.set(dim, range);
+
+            // Get submatrix
+            Matrix wX = new Matrix(this.getSubMatrix(idx.get(0), idx.get(1)));
+
+            // TODO add centerp (subtracting mean from the sample p
+
+            // Detrend submatrix
+            if (detrendp)
+                wX = wX.detrend(dim, "linear");
+
+            // Window
+            wX.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+                @Override
+                public double visit(int row, int column, double value) {
+                    if (dim == 0)
+                        return value * taper[row];
+                    else
+                        return value * taper[column];
+                }
+            });
+
+            // Fourier
+            wX = new Matrix(wX.fft(dim).scalarMultiply(2.0));
+            System.out.println(wX);
+
+            // FIXME positive frequency only??
+
+            switch (outType) {
+                case AMPLITUDE:
+                    W = new Matrix(W.add(wX.sqrt()));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Only amp is supported");
             }
-        });
-        return Pxx;
+        }
+        W = new Matrix(W.scalarMultiply(1. / (start.length * new Matrix(taper).sum().getEntry(0, 0))));
+        return W;
     }
 }
