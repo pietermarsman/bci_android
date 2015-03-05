@@ -1,42 +1,79 @@
 package edu.nl.ru.analysis;
 
 import edu.nl.ru.linalg.Matrix;
+import edu.nl.ru.linalg.WelchOutputType;
 import edu.nl.ru.miscellaneous.ParameterChecker;
+import edu.nl.ru.miscellaneous.Windows;
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DefaultRealMatrixChangingVisitor;
+import org.apache.commons.math3.linear.RealVector;
+
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Pieter on 23-2-2015.
  */
 public class Classifier {
 
-    private Matrix W, b, spatialFilter, filter, spectrumMx, spectrumKey, windowFn;
+    // Spatial (channel) filter
+    double[] spatialFilter;
+    // Welch param
+    double[] startMs;
+    private Matrix W, filter, spectrumMx, spectrumKey;
+    private RealVector b;
     private String[] spectrumDescription;
-    private String type, welchWindowType, welchAveType;
+    private String type;
+    private WelchOutputType welchAveType;
     private Boolean verbose, detrend;
     private Double badChannelThreshold, badTrialThreshold;
     private int[] timeIdx, freqIdx, binsp, isBad;
     private Integer dimension, fs, windowLength;
     private Object dvStats, outsz;
+    // Data acquisition properties
+    private double samplingFrequency;
+    // Window
+    private Windows.WindowType windowType;
+    private double[] windowFn;
 
-    public Classifier(boolean detrend, double badChannelThreshold, double badTrialThreshold, String welchWindowType,
-                      String welchAveType, boolean verbose, int[] timeIdx, int[] freqIdx, int dimension, Matrix spatialFilter,
-                      Matrix spMx, int windowLength) {
+    public Classifier(Matrix W, RealVector b, boolean detrend, double badChannelThreshold, double badTrialThreshold,
+                      Windows.WindowType windowType, WelchOutputType welchAveType, boolean verbose, int[] timeIdx,
+                      int[] freqIdx, int dimension, double[] spatialFilter, Matrix spMx, int windowLength, double
+                              samplingFrequency, double[] startMs) {
+
         this.verbose = verbose;
         this.type = "ersp";
         this.detrend = detrend;
+        ParameterChecker.checkString(welchAveType.toString(), new String[]{"AMPLITUDE", "power", "db"});
+        this.welchAveType = welchAveType;
+        this.dimension = dimension;
+        this.spectrumMx = spMx;
+
+        // Classifier
+        this.W = W;
+        this.b = b;
+
+        // Thresholds
         this.badChannelThreshold = badChannelThreshold;
         this.badTrialThreshold = badTrialThreshold;
-        this.welchWindowType = welchWindowType;
-        ParameterChecker.checkString(welchAveType, new String[]{"amp", "power", "db"});
-        this.welchAveType = welchAveType;
-        this.timeIdx = timeIdx;
-        this.freqIdx = freqIdx;
-        this.dimension = dimension;
-        this.spatialFilter = spatialFilter;
-        this.spectrumMx = spMx;
+
+        // Data acquisition properties
+        this.samplingFrequency = samplingFrequency;
 
         // Additional parameters
         this.windowLength = windowLength;
+
+        // Spatial filter
+        this.spatialFilter = spatialFilter;
+
+        // Welch param
+        this.startMs = startMs;
+
+        // Create window
+        this.timeIdx = timeIdx;
+        this.freqIdx = freqIdx;
+        this.windowType = windowType;
+        windowFn = Windows.getWindow(windowLength, windowType);
     }
 
     public ClassifierResult apply(Matrix data) {
@@ -48,14 +85,17 @@ public class Classifier {
 
         // 1) Detrend
         if (detrend != null && detrend)
-            data = data.detrend(2, "linear");
+            data = data.detrend(1, "linear");
 
         // 2) Again, bad channel removal
+        List<Integer> badChannels = null;
         if (badChannelThreshold != null) {
+            // TODO use more efficient multiplication of only rows
+            Matrix norm = new Matrix(data.multiply(data.transpose()).scalarMultiply(1. / data.getColumnDimension()));
+            badChannels = new LinkedList<Integer>();
+            for (int r = 0; r < data.getRowDimension(); r++)
+                badChannels.add(r);
 
-            // FIXME get the bad channels. Matlab is using t product
-
-            int[] badChannels = new int[]{};
             Matrix car = data.mean(0);
             for (int channel : badChannels) {
                 data.setRow(channel, car.getColumn(0));
@@ -70,24 +110,18 @@ public class Classifier {
 
         // 4) Spatial filter
         if (spatialFilter != null) {
-
-            // FIXME do spatial filter. Matlab is using t product.
+            for (int r = 0; r < data.getRowDimension(); r++)
+                data.setRowVector(r, data.getRowVector(r).mapMultiply(spatialFilter[r]));
         }
 
-        // 5) Check for bad trials
-        if (badTrialThreshold != null) {
-
-            double x2 = 0.0;
-            // FIXME select bad channels. Matlab is using t product.
-
-            boolean isBadTr = x2 > badTrialThreshold;
-            // TODO verbose output
-        }
+        // 5) Bad trial selection
+        // Not needed because only considering a single epoch
 
         // 6) Convert to spectral
-        if (data.getColumnDimension() > windowFn.getRowDimension()) {
-            // FIXME other parameters used for welch
-//            data = data.welch(windowLength, "density", "linear");
+        if (data.getColumnDimension() > windowFn.length) {
+            double[] startMs = new double[]{0};
+            int[] start = computeSampleStarts(samplingFrequency, startMs);
+            data = data.welch(dimension, windowFn, start, windowLength, true);
         }
 
         // 7) Select subset of frequency range (we care about)
@@ -97,33 +131,38 @@ public class Classifier {
         }
 
         // 8) Apply linear classifier
-        // FIXME is 1 the right dimension?
-        Matrix fraw = linearClassifier(data, 1);
+        // FIXME is 0 the right dimension?
+        Matrix fraw = linearClassifier(data, 0);
         // FIXME mean of sum over whole matrix is used to get the multi class f??
 
         // 9) Correct classifier output for bad channels
-        // FIXME using a boolean to set the whole matrix to zero?
+        Matrix f = new Matrix(fraw.copy());
+        if (badChannels != null) {
+            for (int channel : badChannels)
+                f.setRowMatrix(channel, Matrix.zeros(1, f.getColumnDimension()));
+        }
 
         // 10) Get probability of the positive class
-        fraw.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+        Matrix p = new Matrix(f.copy());
+        p.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
             public double visit(int row, int column, double value) {
                 return 1. / (1. + Math.exp(-value));
             }
         });
 
-        return null;
+        return new ClassifierResult(f, fraw, p, data);
     }
 
     private Matrix linearClassifier(Matrix data, int dim) {
         int size = data.getDimension(dim);
-        double[][] result = new double[size][this.b.getRowDimension()];
+        double[][] result = new double[size][this.b.getDimension()];
         for (int i = 0; i < size; i++) {
             double[] rowOrColumn;
             if (dim == 0)
                 rowOrColumn = data.getRow(i);
             else
                 rowOrColumn = data.getColumn(i);
-            result[i] = this.W.multiply(new Matrix(rowOrColumn)).add(this.b).getRow(0);
+            result[i] = this.W.operate(new ArrayRealVector(rowOrColumn)).add(this.b).toArray();
         }
         return new Matrix(result);
     }
@@ -134,7 +173,7 @@ public class Classifier {
 
     public int[] computeSampleStarts(double samplingFrequency, double[] startMs) {
         int[] sampleStarts = new int[startMs.length];
-        for (int i=0; i < startMs.length; i++)
+        for (int i = 0; i < startMs.length; i++)
             sampleStarts[i] = (int) Math.floor(startMs[i] * (samplingFrequency / 1000.));
         return sampleStarts;
     }

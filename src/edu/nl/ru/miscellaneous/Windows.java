@@ -11,6 +11,17 @@ public class Windows {
         GAUSSIAN, HANNING
     }
 
+    public static double[] getWindow(int size, WindowType type) {
+        switch (type){
+            case GAUSSIAN:
+                return gaussianWindow(size);
+            case HANNING:
+                return hanningWindow(size);
+            default:
+                throw new IllegalArgumentException("Argument should be one of WindowType");
+        }
+    }
+
     public static Tuple<int[], Integer> computeWindowLocation(int length, int windows, double overlap) {
         int[] windowStart = new int[windows];
         int width = (int) Math.floor(length / ((windows - 1 ) * (1 - overlap) + 1));
