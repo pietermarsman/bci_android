@@ -22,14 +22,19 @@ public class ParameterChecker {
             throw new IllegalArgumentException("Times should be bigger than 0 but it is " + repeats);
     }
 
-    public static void checkNonNegative(int decimals) {
-        if (decimals < 0)
-            throw new IllegalArgumentException("The number of decimals should be bigger than 0");
+    public static void checkNonNegative(int i) {
+        if (i < 0)
+            throw new IllegalArgumentException("This integer number should not be negative but is " + i);
     }
 
-    public static void checkNonZero(double number) {
-        if (number == 0.0)
-            throw  new IllegalArgumentException("Number should not be zoro.");
+    public static void checkNonNegative(double d) {
+        if (d < 0.)
+            throw new IllegalArgumentException("This double number should not be negative but is " + d);
+    }
+
+    public static void checkNonZero(double d) {
+        if (d == 0.0)
+            throw  new IllegalArgumentException("Number should not be zero but is " + d);
     }
 
     public static void checkAxis(int axis) throws IllegalArgumentException {

@@ -11,18 +11,32 @@ public class Windows {
         GAUSSIAN, HANNING
     }
 
-    public static double[] getWindow(int size, WindowType type) {
+    public static double[] getWindow(int size, WindowType type, boolean unitAmplitude) {
+        ParameterChecker.checkNonNegative(size);
+
+        double[] window;
+        
         switch (type){
             case GAUSSIAN:
-                return gaussianWindow(size);
+                window = gaussianWindow(size);
+                break;
             case HANNING:
-                return hanningWindow(size);
+                window = hanningWindow(size);
+                break;
             default:
-                throw new IllegalArgumentException("Argument should be one of WindowType");
+                throw new IllegalArgumentException("Window type is not yet supported");
         }
+
+        if (unitAmplitude)
+            window = unitAmplitude(window);
+        return window;
     }
 
     public static Tuple<int[], Integer> computeWindowLocation(int length, int windows, double overlap) {
+        ParameterChecker.checkNonNegative(length);
+        ParameterChecker.checkNonNegative(windows);
+        ParameterChecker.checkNonNegative(overlap);
+
         int[] windowStart = new int[windows];
         int width = (int) Math.floor(length / ((windows - 1 ) * (1 - overlap) + 1));
         for (int i = 0; i < windows; i++) {
@@ -31,25 +45,25 @@ public class Windows {
         return new Tuple<int[], Integer>(windowStart, width);
     }
 
-    public static double[] gaussianWindow(int size) {
+    private static double[] gaussianWindow(int size) {
         double sigma = ((double) size - 1) / 2;
         double[] gaussian = new double[size];
         Gaussian distribution = new Gaussian(((double) size - 1.) / 2.0, sigma);
         for (int i = 0; i < size; i++) {
             gaussian[i] = distribution.value(i);
         }
-        return unitAmplitude(gaussian);
+        return gaussian;
     }
 
-    public static double[] hanningWindow(int size) {
+    private static double[] hanningWindow(int size) {
         double[] hanning = new double[size];
         for (int i = 0; i < size; i++) {
             hanning[i] = .5 * (1. - Math.cos((i+1) * 2 * Math.PI / (size + 1)));
         }
-        return unitAmplitude(hanning);
+        return hanning;
     }
 
-    public static double[] unitAmplitude(double[] window) {
+    private static double[] unitAmplitude(double[] window) {
         double max = DoubleArrayFunctions.max(window, 0);
         for (int i = 0; i < window.length; i++)
             window[i] /= max;

@@ -1,6 +1,9 @@
 package edu.nl.ru.linalg;
 
-import edu.nl.ru.miscellaneous.*;
+import edu.nl.ru.miscellaneous.ExtraMath;
+import edu.nl.ru.miscellaneous.ParameterChecker;
+import edu.nl.ru.miscellaneous.Triple;
+import edu.nl.ru.miscellaneous.Tuple;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -13,6 +16,7 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.MathArrays;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 
@@ -37,14 +41,16 @@ public class Matrix extends Array2DRowRealMatrix {
     // [x] detrending,                                  > this.detrend()
     // [x] covariance computation,                      > this.covariance()
     // [x] data selection (subsetting)                  > getSubMatrix()
-    // [x] outlier-detection,
-    // [ ] welch's method for spectrum estimation,
+    // [x] outlier-detection,                           > removeOutliers()
+    // [x] welch's method for spectrum estimation,      > welch()
     // [ ] fft-based spectral filtering,
     // [x] eigen-decompositions (SVD/EIG)               > this.eig() and this.svd()
 
+    static Logger log = Logger.getLogger(Matrix.class);
 
     public Matrix() {
         super();
+        log.setLevel(null);
     }
 
     public Matrix(double[] v) {
@@ -68,16 +74,24 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public static Matrix zeros(int dim0, int dim1) {
+        ParameterChecker.checkNonNegative(dim0);
+        ParameterChecker.checkNonNegative(dim1);
+
         double[][] zeros = new double[dim0][dim1];
         return new Matrix(zeros);
     }
 
     public static Matrix ones(int dim0, int dim1) {
+        ParameterChecker.checkNonNegative(dim0);
+        ParameterChecker.checkNonNegative(dim1);
+
         double[][] zeros = new double[dim0][dim1];
         return new Matrix(new Array2DRowRealMatrix(zeros).scalarAdd(1.0));
     }
 
     public static Matrix eye(int dim) {
+        ParameterChecker.checkNonNegative(dim);
+
         double[] ones = new double[dim];
         for (int i = 0; i < dim; i++)
             ones[i] = 1.0;
@@ -85,6 +99,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public static Matrix car(int size) {
+        ParameterChecker.checkNonNegative(size);
+
         return new Matrix(Matrix.eye(size).scalarAdd(-1.0 / ((double) size)));
     }
 
@@ -102,6 +118,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public static Matrix range(double start, double end, double step) {
         ParameterChecker.checkNonZero(step);
+
         int size = (int) ((end - start) / step);
         double[] arr = new double[size];
         int index = 0;
@@ -122,13 +139,19 @@ public class Matrix extends Array2DRowRealMatrix {
         return sb.toString();
     }
 
+    public String shapeString() {
+        return "(" + this.getRowDimension() + ", " + this.getColumnDimension() + ")";
+    }
+
     public int getDimension(int axis) {
         ParameterChecker.checkAxis(axis);
+
         return axis == 0 ? this.getRowDimension() : this.getColumnDimension();
     }
 
     public Matrix round(int decimals) {
         ParameterChecker.checkNonNegative(decimals);
+
         double[][] data = this.getData();
         double factor = Math.pow(10, decimals);
         for (int i = 0; i < data.length; i++)
@@ -158,6 +181,7 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix repeat(int repeats, int axis) {
         ParameterChecker.checkAxis(axis);
         ParameterChecker.checkRepeats(repeats);
+
         int rows = this.getRowDimension();
         int columns = this.getColumnDimension();
         if (axis == 0)
@@ -208,6 +232,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix mean(int axis) {
+        ParameterChecker.checkAxis(axis, true);
+
         double scalar;
         if (axis == 0)
             scalar = this.getRowDimension();
@@ -226,9 +252,10 @@ public class Matrix extends Array2DRowRealMatrix {
         return this.evaluateUnivariateStatistic(axis, med);
     }
 
-    public Matrix multipleElements(final Matrix b) {
+    public Matrix multiplyElements(final Matrix b) {
         ParameterChecker.checkEquals(this.getRowDimension(), b.getRowDimension());
         ParameterChecker.checkEquals(this.getColumnDimension(), b.getColumnDimension());
+
         RealMatrix c = this.copy();
         c.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
             public double visit(int row, int column, double value) {
@@ -240,6 +267,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix evaluateUnivariateStatistic(int axis, AbstractUnivariateStatistic stat) {
         ParameterChecker.checkAxis(axis, true);
+
         double[] data;
         if (axis == -1) {
             return this.flatten().evaluateUnivariateStatistic(0, stat);
@@ -260,6 +288,8 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix sum(int axis) {
+        ParameterChecker.checkAxis(axis, true);
+
         double[][] data = this.getData();
         if (axis == -1) {
             double[] mean = {0.0};
@@ -317,6 +347,7 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix detrend(int axis, String type) {
         ParameterChecker.checkAxis(axis);
         ParameterChecker.checkString(type, new String[]{"constant", "linear"});
+
         if (type.equalsIgnoreCase("constant")) {
             Matrix mean = this.mean(axis);
             int otherAxis = axis == 0 ? 1 : 0;
@@ -363,6 +394,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix fft(int axis, TransformType direction) {
         ParameterChecker.checkAxis(axis);
+
         // FIXME which normalization to use?
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         double[][] ft = new double[this.getRowDimension()][this.getColumnDimension()];
@@ -384,6 +416,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Complex[][] fftComplex(int axis, TransformType direction) {
         ParameterChecker.checkAxis(axis);
+
         // FIXME which normalization to use?
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         Complex[][] ft = new Complex[this.getRowDimension()][this.getColumnDimension()];
@@ -412,9 +445,10 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Tuple<Matrix, RealVector> eig(String order) {
+        ParameterChecker.checkString(order, new String[]{"descending", "ascending"});
+
         // FIXME is returning negative of python implementation
         // FIXME slightly different from python implementation
-        ParameterChecker.checkString(order, new String[]{"descending", "ascending"});
         EigenDecomposition eig = new EigenDecomposition(this);
         RealMatrix oldVecs = new Array2DRowRealMatrix(eig.getV().getData());
         double[] oldVals = eig.getRealEigenvalues();
@@ -448,6 +482,8 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix spatialFilter(String type, double whitenThres) {
         ParameterChecker.checkString(type, new String[]{"car", "whiten"});
+        ParameterChecker.checkNonNegative(whitenThres);
+
         if (type.equalsIgnoreCase("car")) {
             return new Matrix(this.preMultiply(Matrix.car(this.getRowDimension())));
         } else {
@@ -467,7 +503,9 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix convolve(double[] function, int axis) {
+        ParameterChecker.checkNonZero(function.length);
         ParameterChecker.checkAxis(axis);
+
         if (axis == 0) {
             int newLength = this.getColumnDimension() + function.length - 1;
             double[][] data = new double[this.getRowDimension()][newLength];
@@ -482,6 +520,8 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix removeOutliers(int axis, double lowerThreshold, double upperThreshold, int maxIter, String feat) {
         ParameterChecker.checkAxis(axis);
+        ParameterChecker.checkNonZero(maxIter);
+        ParameterChecker.checkNonNegative(maxIter);
         ParameterChecker.checkString(feat, new String[]{"var", "mu"});
 
         Matrix m = this;
@@ -537,6 +577,14 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendp) {
+        log.debug("Applying welch algorithm: dim=" + dim + ", width=" + width);
+        log.debug("Checking parameters");
+        ParameterChecker.checkAxis(dim);
+        ParameterChecker.checkNonZero(taper.length);
+        ParameterChecker.checkNonZero(start.length);
+        ParameterChecker.checkNonZero(width);
+        ParameterChecker.checkNonNegative(width);
+
         // TODO add outtype, default is 'amp'
         WelchOutputType outType = WelchOutputType.AMPLITUDE;
 
