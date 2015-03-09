@@ -448,6 +448,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix spatialFilter(String type, double whitenThres) {
         ParameterChecker.checkString(type, new String[]{"car", "whiten"});
+
         if (type.equalsIgnoreCase("car")) {
             return new Matrix(this.preMultiply(Matrix.car(this.getRowDimension())));
         } else {
@@ -468,6 +469,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix convolve(double[] function, int axis) {
         ParameterChecker.checkAxis(axis);
+
         if (axis == 0) {
             int newLength = this.getColumnDimension() + function.length - 1;
             double[][] data = new double[this.getRowDimension()][newLength];
@@ -537,6 +539,10 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendp) {
+        ParameterChecker.checkAxis(dim, false);
+        ParameterChecker.checkPower(width, 2);
+        ParameterChecker.checkEquals(taper.length, width);
+
         // TODO add outtype, default is 'amp'
         WelchOutputType outType = WelchOutputType.AMPLITUDE;
 
