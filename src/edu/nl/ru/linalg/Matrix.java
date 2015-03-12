@@ -106,7 +106,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public static int[] range(int start, int end, int step) {
         ParameterChecker.checkNonZero(step);
-        int size = (end - start) / step;
+        int size = (int) Math.ceil(((double) (end - start)) / step);
         int[] arr = new int[size];
         int index = 0;
         for (int i = start; i < end; i += step) {
@@ -116,7 +116,7 @@ public class Matrix extends Array2DRowRealMatrix {
         return arr;
     }
 
-    public static Matrix range(double start, double end, double step) {
+    public static double[] range(double start, double end, double step) {
         ParameterChecker.checkNonZero(step);
 
         int size = (int) ((end - start) / step);
@@ -124,7 +124,7 @@ public class Matrix extends Array2DRowRealMatrix {
         int index = 0;
         for (double i = start; i < end; i += step)
             arr[index] = i;
-        return new Matrix(arr);
+        return arr;
     }
 
     public String toString() {
@@ -482,10 +482,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix spatialFilter(String type, double whitenThres) {
         ParameterChecker.checkString(type, new String[]{"car", "whiten"});
-<<<<<<< HEAD
         ParameterChecker.checkNonNegative(whitenThres);
-=======
->>>>>>> 83375482788cc38d38ef395a3ca886a9a4fdee34
 
         if (type.equalsIgnoreCase("car")) {
             return new Matrix(this.preMultiply(Matrix.car(this.getRowDimension())));
