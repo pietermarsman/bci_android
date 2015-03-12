@@ -482,7 +482,10 @@ public class Matrix extends Array2DRowRealMatrix {
 
     public Matrix spatialFilter(String type, double whitenThres) {
         ParameterChecker.checkString(type, new String[]{"car", "whiten"});
+<<<<<<< HEAD
         ParameterChecker.checkNonNegative(whitenThres);
+=======
+>>>>>>> 83375482788cc38d38ef395a3ca886a9a4fdee34
 
         if (type.equalsIgnoreCase("car")) {
             return new Matrix(this.preMultiply(Matrix.car(this.getRowDimension())));
@@ -579,8 +582,9 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendp) {
         log.debug("Applying welch algorithm: dim=" + dim + ", width=" + width);
         log.debug("Checking parameters");
-        ParameterChecker.checkAxis(dim);
-        ParameterChecker.checkNonZero(taper.length);
+        ParameterChecker.checkAxis(dim, false);
+        ParameterChecker.checkPower(width, 2);
+        ParameterChecker.checkEquals(taper.length, width);
         ParameterChecker.checkNonZero(start.length);
         ParameterChecker.checkNonZero(width);
         ParameterChecker.checkNonNegative(width);
