@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * Created by Pieter on 23-2-2015.
  */
-public class DataProcessor implements Runnable {
+public class ContinuousClassifier implements Runnable {
 
     String buffHost, endValue;
     NFEvent endType, predEventType, baselineEventType;
@@ -21,9 +21,9 @@ public class DataProcessor implements Runnable {
     boolean normLat, verbose;
     Object[] hdr;
 
-    static Logger log = Logger.getLogger(DataProcessor.class);
+    static Logger log = Logger.getLogger(ContinuousClassifier.class);
 
-    public DataProcessor() {
+    public ContinuousClassifier() {
         log.setLevel(null);
         buffHost = "localhost";
         buffPort = 1972;
