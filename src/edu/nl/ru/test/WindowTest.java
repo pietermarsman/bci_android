@@ -12,13 +12,13 @@ import static org.junit.Assert.assertArrayEquals;
 public class WindowTest extends TestCase {
 
     public void testHanning() throws Exception {
-        double[] ret = Windows.hanningWindow(6);
+        double[] ret = Windows.getWindow(6, Windows.WindowType.HANNING, true);
         double[] good = new double[]{.1981, .6431, 1., 1., .6431, .1981};
         assertArrayEquals(good, ret, 0.001);
     }
 
     public void testGaussian() throws Exception {
-        double[] ret = Windows.gaussianWindow(6);
+        double[] ret = Windows.getWindow(6, Windows.WindowType.GAUSSIAN, true);
         double[] good = new double[]{.6188, .8521, 1., 1., .8521, .6188};
         assertArrayEquals(good, ret, 0.001);
     }

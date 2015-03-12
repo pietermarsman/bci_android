@@ -78,7 +78,7 @@ public class Classifier {
         this.timeIdx = timeIdx;
         this.freqIdx = freqIdx;
         this.windowType = windowType;
-        windowFn = Windows.getWindow(windowLength, windowType);
+        windowFn = Windows.getWindow(windowLength, windowType, true);
 
         log.debug("Finished initializing");
     }

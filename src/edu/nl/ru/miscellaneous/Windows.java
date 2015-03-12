@@ -15,7 +15,7 @@ public class Windows {
         ParameterChecker.checkNonNegative(size);
 
         double[] window;
-        
+
         switch (type){
             case GAUSSIAN:
                 window = gaussianWindow(size);
