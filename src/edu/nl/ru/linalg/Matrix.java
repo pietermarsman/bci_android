@@ -46,7 +46,7 @@ public class Matrix extends Array2DRowRealMatrix {
     // [ ] fft-based spectral filtering,
     // [x] eigen-decompositions (SVD/EIG)               > this.eig() and this.svd()
 
-    static Logger log = Logger.getLogger(Matrix.class);
+    private static Logger log = Logger.getLogger(Matrix.class);
 
     public Matrix() {
         super();

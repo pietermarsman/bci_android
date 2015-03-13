@@ -7,7 +7,6 @@ import edu.nl.ru.miscellaneous.Windows;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.DefaultRealMatrixChangingVisitor;
 import org.apache.commons.math3.linear.RealVector;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.util.LinkedList;
@@ -18,12 +17,12 @@ import java.util.List;
  */
 public class Classifier {
 
-    static Logger log = Logger.getLogger(Classifier.class);
+    private static Logger log = Logger.getLogger(Classifier.class);
 
     // Spatial (channel) filter
-    double[] spatialFilter;
+    private double[] spatialFilter;
     // Welch param
-    double[] startMs;
+    private double[] startMs;
     private Matrix W, filter, spectrumMx, spectrumKey;
     private RealVector b;
     private String[] spectrumDescription;
@@ -41,10 +40,10 @@ public class Classifier {
     private double[] windowFn;
 
     public Classifier(Matrix W, RealVector b, boolean detrend, double badChannelThreshold, double badTrialThreshold,
-                      Windows.WindowType windowType, WelchOutputType welchAveType, Level verbose, int[] timeIdx,
+                      Windows.WindowType windowType, WelchOutputType welchAveType, int[] timeIdx,
                       int[] freqIdx, int dimension, double[] spatialFilter, Matrix spMx, int windowLength, double
                               samplingFrequency, double[] startMs) {
-        log.setLevel(verbose);
+        log.setLevel(null);
         log.debug("Started initializing");
 
         this.type = "ersp";

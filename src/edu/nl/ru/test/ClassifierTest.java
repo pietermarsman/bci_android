@@ -7,14 +7,13 @@ import edu.nl.ru.linalg.WelchOutputType;
 import edu.nl.ru.miscellaneous.Windows;
 import junit.framework.TestCase;
 import org.apache.commons.math3.linear.RealVector;
-import org.apache.log4j.Level;
 
 /**
  * Created by Pieter on 5-3-2015.
  */
 public class ClassifierTest extends TestCase {
 
-    Matrix a, b, c, d, e;
+    private Matrix a, b, c, d, e;
 
     protected void setUp() throws Exception {
         double[][] dataA = {{1.0, 2.0}, {5.0, 4.0}};
@@ -39,7 +38,7 @@ public class ClassifierTest extends TestCase {
         RealVector b = Matrix.zeros(5, 1).getColumnVector(0);
         double[] startMs = new double[]{0};
         Classifier classfier = new Classifier(W, b, true, badChannelThreshold, badTrialThreshold, Windows.WindowType
-                .HANNING, WelchOutputType.AMPLITUDE, Level.ALL, timeIdx, freqIdx, 1, null, null, 2, 100, startMs);
+                .HANNING, WelchOutputType.AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100, startMs);
         ClassifierResult ret = classfier.apply(e);
     }
 }

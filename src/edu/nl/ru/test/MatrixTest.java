@@ -9,8 +9,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 public class MatrixTest extends TestCase {
 
-    Matrix a, b, c, d, e;
-
+    private Matrix a, b, c, d, e;
 
     protected void setUp() throws Exception {
         double[][] dataA = {{1.0, 2.0}, {5.0, 4.0}};

@@ -7,7 +7,7 @@ import edu.nl.ru.linalg.Matrix;
  */
 public class ClassifierResult {
 
-    public Matrix f, fraw, p, X;
+    public final Matrix f, fraw, p, X;
 
     public ClassifierResult(Matrix f, Matrix fraw, Matrix p, Matrix X) {
         this.f = f;

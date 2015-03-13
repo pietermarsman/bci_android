@@ -5,6 +5,7 @@ import nl.fcdonders.fieldtrip.bufferclient.BufferClientClock;
 import nl.fcdonders.fieldtrip.bufferclient.BufferEvent;
 import nl.fcdonders.fieldtrip.bufferclient.Header;
 import nl.fcdonders.fieldtrip.bufferclient.SamplesEventsCount;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -15,18 +16,17 @@ import java.util.Arrays;
  */
 public class ContinuousClassifier implements Runnable {
 
-    static Logger log = Logger.getLogger(ContinuousClassifier.class);
-    String bufferHost, endValue, predictionEventType;
-    NFEvent endType;
-    int bufferPort, timeoutMs;
-    double overlap, predictionFilter;
-    int sampleTrialLength, sampleStep, nSamples;
-    Header header;
-    Classifier classifier;
+    private static Logger log = Logger.getLogger(ContinuousClassifier.class);
+    private String bufferHost, endValue, predictionEventType, endType;
+    private int bufferPort, timeoutMs;
+    private double overlap, predictionFilter;
+    private int sampleTrialLength, sampleStep, nSamples;
+    private Header header;
+    private Classifier classifier;
 
-    public ContinuousClassifier(String bufferHost, int bufferPort, Header header, NFEvent endType, String endValue,
+    public ContinuousClassifier(String bufferHost, int bufferPort, Header header, String endType, String endValue,
                                 String predictionEventType, int lengthTrSample, double overlap, int timeoutMs, Classifier classifier, double predictionFilter) {
-        log.setLevel(null);
+        log.setLevel(Level.DEBUG);
         this.bufferHost = bufferHost;
         this.bufferPort = bufferPort;
         this.header = header;
@@ -40,7 +40,7 @@ public class ContinuousClassifier implements Runnable {
         this.predictionFilter = predictionFilter;
 
         // Compute parameters
-        this.sampleStep = (int) Math.round(sampleTrialLength * overlap);
+        this.sampleStep = (int) Math.round(sampleTrialLength * this.overlap);
         this.nSamples = -1;
     }
 
@@ -156,9 +156,10 @@ public class ContinuousClassifier implements Runnable {
                     e.printStackTrace();
                 }
                 boolean any = false;
-                for (BufferEvent event : events)
-                    any = any || (event.getType().getArray().equals(endType)
-                                    && event.getValue().getArray().equals(endValue));
+                for (BufferEvent event : events) {
+                    any = any || (event.getType().getArray().equals(endType) && event.getValue().getArray().equals(endValue));
+                    log.debug("Received " + event.getType() + " event: " + event.getValue());
+                }
                 if (any) {
                     log.info("Got exit event. Stoppping");
                     endExpt = true;
