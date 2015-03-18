@@ -1,15 +1,20 @@
 package edu.nl.ru.analysis;
 
 import edu.nl.ru.linalg.Matrix;
+import edu.nl.ru.linalg.WelchOutputType;
+import edu.nl.ru.miscellaneous.Windows;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClientClock;
 import nl.fcdonders.fieldtrip.bufferclient.BufferEvent;
 import nl.fcdonders.fieldtrip.bufferclient.Header;
 import nl.fcdonders.fieldtrip.bufferclient.SamplesEventsCount;
+import org.apache.commons.math3.linear.RealVector;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Pieter on 23-2-2015.
@@ -22,10 +27,10 @@ public class ContinuousClassifier implements Runnable {
     private double overlap, predictionFilter;
     private int sampleTrialLength, sampleStep, nSamples;
     private Header header;
-    private Classifier classifier;
+    private List<Classifier> classifiers;
 
     public ContinuousClassifier(String bufferHost, int bufferPort, Header header, String endType, String endValue,
-                                String predictionEventType, int lengthTrSample, double overlap, int timeoutMs, Classifier classifier, double predictionFilter) {
+                                String predictionEventType, int lengthTrSample, double overlap, int timeoutMs, List<Classifier> classifiers, double predictionFilter) {
         log.setLevel(Level.DEBUG);
         this.bufferHost = bufferHost;
         this.bufferPort = bufferPort;
@@ -36,12 +41,31 @@ public class ContinuousClassifier implements Runnable {
         this.sampleTrialLength = lengthTrSample;
         this.overlap = overlap;
         this.timeoutMs = timeoutMs;
-        this.classifier = classifier;
+        this.classifiers = classifiers;
         this.predictionFilter = predictionFilter;
 
         // Compute parameters
         this.sampleStep = (int) Math.round(sampleTrialLength * this.overlap);
         this.nSamples = -1;
+    }
+
+
+    public static void main(String[] args) {
+        double badChannelThreshold = -1.;
+        double badTrialThreshold = -1.;
+        int[] timeIdx = new int[]{0, 1, 2};
+        int[] freqIdx = new int[]{0, 1};
+        Matrix W = Matrix.zeros(2, 2);
+        RealVector b = Matrix.zeros(2, 1).getColumnVector(0);
+        double[] startMs = new double[]{0};
+        Classifier classifier = new Classifier(W, b, true, badChannelThreshold, badTrialThreshold, Windows.WindowType
+                .HANNING, WelchOutputType.AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100, startMs);
+        List<Classifier> classifiers = new LinkedList<Classifier>();
+        classifiers.add(classifier);
+        ContinuousClassifier c = new ContinuousClassifier("localhost", 1973, null, "stimulus.test", "end",
+                "classifiers.prediction", 25, .5, 1000, classifiers, 1.);
+        Thread t = new Thread(c);
+        t.start();
     }
 
     @Override
@@ -131,10 +155,11 @@ public class ContinuousClassifier implements Runnable {
                 log.debug(String.format("Got data @ %d->%d samples", from, to));
 
                 // Apply classification
-                ClassifierResult classifierResult = classifier.apply(new Matrix(data));
+                // TODO apply each classifier
+                ClassifierResult classifierResult = classifiers.get(0).apply(new Matrix(data));
 //                log.debug(String.format("Classifier result: %s", classifierResult.p));
 
-                // Smooth the classifier
+                // Smooth the classifiers
                 dv = new Matrix(dv.scalarMultiply(predictionFilter).add(classifierResult.f.scalarMultiply(1. - predictionFilter)));
 
                 // Send prediction event
