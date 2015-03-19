@@ -8,6 +8,9 @@ import edu.nl.ru.miscellaneous.Windows;
 import junit.framework.TestCase;
 import org.apache.commons.math3.linear.RealVector;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Created by Pieter on 5-3-2015.
  */
@@ -32,13 +35,17 @@ public class ClassifierTest extends TestCase {
     public void testApply() throws Exception {
         double badChannelThreshold = -1.;
         double badTrialThreshold = -1.;
-        int[] timeIdx = new int[]{0, 1, 2};
-        int[] freqIdx = new int[]{0, 1};
+        Integer[] timeIdx = new Integer[]{0, 1, 2};
+        Integer[] freqIdx = new Integer[]{0, 1};
         Matrix W = Matrix.zeros(5, 2);
+        List<Matrix> Ws = new LinkedList<Matrix>();
+        Ws.add(W);
         RealVector b = Matrix.zeros(5, 1).getColumnVector(0);
-        double[] startMs = new double[]{0};
-        Classifier classfier = new Classifier(W, b, true, badChannelThreshold, badTrialThreshold, Windows.WindowType
-                .HANNING, WelchOutputType.AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100, startMs);
+        Double[] startMs = new Double[]{0.};
+        String[] spectrumDescription = new String[]{"alphaL", "alphaR", "baddness", "badChL", "badChR"};
+        Integer[] isBad = new Integer[]{0, 0, 0};
+        Classifier classfier = new Classifier(Ws, b, true, badChannelThreshold, badTrialThreshold, Windows.WindowType
+                .HANNING, WelchOutputType.AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100., startMs, spectrumDescription, isBad);
         ClassifierResult ret = classfier.apply(e);
     }
 }

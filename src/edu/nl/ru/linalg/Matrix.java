@@ -1,9 +1,6 @@
 package edu.nl.ru.linalg;
 
-import edu.nl.ru.miscellaneous.ExtraMath;
-import edu.nl.ru.miscellaneous.ParameterChecker;
-import edu.nl.ru.miscellaneous.Triple;
-import edu.nl.ru.miscellaneous.Tuple;
+import edu.nl.ru.miscellaneous.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -20,8 +17,8 @@ import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 
-import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.getSortIdx;
-import static edu.nl.ru.miscellaneous.DoubleArrayFunctions.reverseDoubleArrayInPlace;
+import static edu.nl.ru.miscellaneous.ArrayFunctions.getSortIdx;
+import static edu.nl.ru.miscellaneous.ArrayFunctions.reverseDoubleArrayInPlace;
 import static org.apache.commons.math3.stat.StatUtils.max;
 
 /**
@@ -147,6 +144,11 @@ public class Matrix extends Array2DRowRealMatrix {
         ParameterChecker.checkAxis(axis);
 
         return axis == 0 ? this.getRowDimension() : this.getColumnDimension();
+    }
+
+    public Matrix reshape(int rows, int collumns) {
+        ParameterChecker.checkEquals(rows * collumns, this.getRowDimension() * this.getColumnDimension());
+        return new Matrix(ArrayFunctions.reshape(this.getData(), rows, collumns));
     }
 
     public Matrix round(int decimals) {

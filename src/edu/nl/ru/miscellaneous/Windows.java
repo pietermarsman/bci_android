@@ -4,6 +4,7 @@ import org.apache.commons.math3.analysis.function.Gaussian;
 
 /**
  * Created by Pieter on 11-2-2015.
+ * Several window functions
  */
 public class Windows {
 
@@ -64,7 +65,7 @@ public class Windows {
     }
 
     private static double[] unitAmplitude(double[] window) {
-        double max = DoubleArrayFunctions.max(window, 0);
+        double max = ArrayFunctions.max(window, 0);
         for (int i = 0; i < window.length; i++)
             window[i] /= max;
         return window;

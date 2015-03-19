@@ -23,14 +23,17 @@ public class ContinuousClassifier implements Runnable {
 
     private static Logger log = Logger.getLogger(ContinuousClassifier.class);
     private String bufferHost, endValue, predictionEventType, endType;
-    private int bufferPort, timeoutMs;
-    private double overlap, predictionFilter;
-    private int sampleTrialLength, sampleStep, nSamples;
+    private int bufferPort;
+    private Double overlap, predictionFilter;
+    private Integer sampleTrialLength, sampleTrialMs, sampleStepMs, sampleStep, timeoutMs;
+    private Float fs;
     private Header header;
     private List<Classifier> classifiers;
+    private BufferClientClock C;
 
     public ContinuousClassifier(String bufferHost, int bufferPort, Header header, String endType, String endValue,
-                                String predictionEventType, int lengthTrSample, double overlap, int timeoutMs, List<Classifier> classifiers, double predictionFilter) {
+                                String predictionEventType, Integer sampleTrialLength, Integer sampleTrialMs, Double overlap, Integer timeoutMs,
+                                List<Classifier> classifiers, Double predictionFilter) {
         log.setLevel(Level.DEBUG);
         this.bufferHost = bufferHost;
         this.bufferPort = bufferPort;
@@ -38,42 +41,52 @@ public class ContinuousClassifier implements Runnable {
         this.endType = endType;
         this.endValue = endValue;
         this.predictionEventType = predictionEventType;
-        this.sampleTrialLength = lengthTrSample;
+        this.sampleTrialLength = sampleTrialLength;
+        this.sampleTrialMs = sampleTrialMs;
         this.overlap = overlap;
         this.timeoutMs = timeoutMs;
         this.classifiers = classifiers;
         this.predictionFilter = predictionFilter;
 
         // Compute parameters
-        this.sampleStep = (int) Math.round(sampleTrialLength * this.overlap);
-        this.nSamples = -1;
+//        this.sampleStepMs = (int) Math.round(this.sampleTrialLength * this.overlap);
+        this.sampleStepMs = null;
+
+        C = new BufferClientClock();
+        connect();
+        setNullFields();
+        log.info(this);
     }
 
+    private void setNullFields() {
+        // Set trial length
+        if (sampleTrialLength == null) {
+            sampleTrialLength = 0;
+            if (sampleTrialMs != null) {
+                if (header != null) {
+                    fs = header.fSample;
+                } else {
+                    log.error("First connect to the buffer");
+                }
+                Float ret = sampleTrialMs / 1000 * fs;
+                sampleTrialLength = ret.intValue();
+            }
+        }
 
-    public static void main(String[] args) {
-        double badChannelThreshold = -1.;
-        double badTrialThreshold = -1.;
-        int[] timeIdx = new int[]{0, 1, 2};
-        int[] freqIdx = new int[]{0, 1};
-        Matrix W = Matrix.zeros(2, 2);
-        RealVector b = Matrix.zeros(2, 1).getColumnVector(0);
-        double[] startMs = new double[]{0};
-        Classifier classifier = new Classifier(W, b, true, badChannelThreshold, badTrialThreshold, Windows.WindowType
-                .HANNING, WelchOutputType.AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100, startMs);
-        List<Classifier> classifiers = new LinkedList<Classifier>();
-        classifiers.add(classifier);
-        ContinuousClassifier c = new ContinuousClassifier("localhost", 1973, null, "stimulus.test", "end",
-                "classifiers.prediction", 25, .5, 1000, classifiers, 1.);
-        Thread t = new Thread(c);
-        t.start();
+        // Set windows
+        for (Classifier c : classifiers) {
+            sampleTrialLength = c.getSampleTrialLength(sampleTrialLength);
+        }
+
+        // Set wait time
+        if (sampleStepMs != null) {
+            sampleStep = Math.round(sampleStepMs / 1000 * fs);
+        } else {
+            sampleStep = new Long(Math.round(sampleTrialLength * overlap)).intValue();
+        }
     }
 
-    @Override
-    public void run() {
-        log.info("Running the dataprocessor");
-
-        BufferClientClock C = new BufferClientClock();
-
+    private void connect() {
         while (header == null) {
             try {
                 log.info("Connecting to " + bufferHost + ":" + bufferPort);
@@ -94,8 +107,12 @@ public class ContinuousClassifier implements Runnable {
                 }
             }
         }
+    }
 
-        //float[][] data = C.getFloatData(0,header.nSamples-1);
+    @Override
+    public void run() {
+        log.info("Running the dataprocessor");
+
         log.info("#channels....: " + header.nChans);
         log.info("#samples.....: " + header.nSamples);
         log.info("#events......: " + header.nEvents);
@@ -106,39 +123,45 @@ public class ContinuousClassifier implements Runnable {
                 log.debug("Ch. " + n + ": " + header.labels[n]);
             }
         }
-        nSamples = header.nSamples;
 
         // Now do the echo-server
-        int nEvents = header.nEvents, nEpochs = 0;
+        int nEvents = header.nEvents, nEpochs = 0, nSamples = header.nSamples;
+
+        Matrix dv = null;
+        Matrix filterState = null;
         boolean endExpt = false;
         long t0 = 0;
-        Matrix dv = Matrix.zeros(25, 2);
+
+        log.info(this);
+
         while (!endExpt) {
             // Getting data from buffer
             SamplesEventsCount status = null; // Block until there are new events
             try {
-                status = C.waitForSamples(this.nSamples + sampleTrialLength, timeoutMs);
+                log.debug("Waiting for " + (nSamples + sampleTrialLength + 1) + " samples");
+                status = C.waitForSamples(nSamples + sampleTrialLength + 1, this.timeoutMs);
             } catch (IOException e) {
                 e.printStackTrace();
             }
             if (status.nSamples < header.nSamples) {
                 log.info("Buffer restart detected");
                 nSamples = status.nSamples;
-                dv = Matrix.zeros(25, 2);
+                dv = null;
                 continue;
             }
 
             // Logging stuff when nothing is happening
             if (System.currentTimeMillis() - t0 > 5000) {
-                log.info(String.format("5.3f seconds, %d samples, %d events", System.currentTimeMillis() / 1000, status.nSamples, status.nEvents));
+                log.info(String.format("%5.3f seconds, %d samples, %d events", System.currentTimeMillis() / 1000.,
+                        status.nSamples, status.nEvents));
                 t0 = System.currentTimeMillis();
             }
 
             // Process any new data
             int onSamples = nSamples;
-            int[] start = Matrix.range(onSamples, status.nSamples - sampleTrialLength - 1,sampleStep);
+            int[] start = Matrix.range(onSamples, status.nSamples - sampleTrialLength - 1, sampleStep);
             if (start.length > 0)
-                nSamples = start[start.length-1] + sampleStep;
+                nSamples = start[start.length - 1] + sampleStep;
 
             for (int startId = 0; startId < start.length; startId++) {
                 nEpochs++;
@@ -146,24 +169,37 @@ public class ContinuousClassifier implements Runnable {
                 // Get the data
                 int from = start[startId];
                 int to = start[startId] + sampleTrialLength - 1;
-                double[][] data = null;
+                Matrix data = null;
                 try {
-                    data = C.getDoubleData(from, to);
+                    data = new Matrix(new Matrix(C.getDoubleData(from, to)).transpose());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 log.debug(String.format("Got data @ %d->%d samples", from, to));
 
                 // Apply classification
-                // TODO apply each classifier
-                ClassifierResult classifierResult = classifiers.get(0).apply(new Matrix(data));
-//                log.debug(String.format("Classifier result: %s", classifierResult.p));
+                Matrix f = new Matrix(classifiers.get(0).getOutputSize(), 1);
+                Matrix fraw = new Matrix(classifiers.get(0).getOutputSize(), 1);
+                for (Classifier c : classifiers) {
+                    ClassifierResult result = c.apply(data);
+                    log.debug(result);
+                    f = new Matrix(f.add(result.f));
+                    fraw = new Matrix(fraw.add(result.fraw));
+                }
 
                 // Smooth the classifiers
-                dv = new Matrix(dv.scalarMultiply(predictionFilter).add(classifierResult.f.scalarMultiply(1. - predictionFilter)));
+                if (dv == null || predictionFilter == null)
+                    dv = f;
+                else {
+                    if (predictionFilter > 0.) {
+                        dv = new Matrix(dv.scalarMultiply(predictionFilter).add(f.scalarMultiply(1. -
+                                predictionFilter)));
+                    }
+                }
 
                 // Send prediction event
                 BufferEvent event = new BufferEvent(predictionEventType, dv.getRow(0), from);
+                log.debug("SEND EVENT: " + event.getType() + ", value: " + event.getValue());
                 try {
                     C.putEvent(event);
                 } catch (IOException e) {
@@ -182,8 +218,9 @@ public class ContinuousClassifier implements Runnable {
                 }
                 boolean any = false;
                 for (BufferEvent event : events) {
-                    any = any || (event.getType().getArray().equals(endType) && event.getValue().getArray().equals(endValue));
-                    log.debug("Received " + event.getType() + " event: " + event.getValue());
+                    any = any || (event.getType().getArray().equals(endType) && event.getValue().getArray().equals
+                            (endValue));
+                    log.debug("GET EVENT: " + event.getType() + ", value: " + event.getValue());
                 }
                 if (any) {
                     log.info("Got exit event. Stoppping");
@@ -197,5 +234,44 @@ public class ContinuousClassifier implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nContinuousClassifier with parameters:");
+        sb.append("\nBuffer host:  \t").append(bufferHost);
+        sb.append("\nBuffer port:  \t").append(bufferPort);
+        sb.append("\nHeader:\n     \t").append(header);
+        sb.append("\nEnd type:     \t").append(endType);
+        sb.append("\nEnd value:    \t").append(endValue);
+        sb.append("\nLogger level: \t").append(log.getLevel());
+        sb.append("\npredEventType:\t").append(predictionEventType);
+        sb.append("\nTrial ms:     \t").append("null");
+        sb.append("\nTrial samples:\t").append(sampleTrialLength);
+        sb.append("\nOverlap:      \t").append(overlap);
+        sb.append("\nStep ms:      \t").append(sampleStepMs);
+        sb.append("\nPred filt:    \t").append(predictionFilter);
+        sb.append("\nTimeout ms:   \t").append(timeoutMs);
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        Integer[] timeIdx = new Integer[]{0, 1, 2};
+        Integer[] freqIdx = new Integer[]{0, 1};
+        Matrix W = Matrix.zeros(2, 2);
+        List<Matrix> Ws = new LinkedList<Matrix>();
+        Ws.add(W);
+        RealVector b = Matrix.zeros(2, 1).getColumnVector(0);
+        Double[] startMs = new Double[]{0.};
+        String[] spectrumDescription = new String[]{"alphaL", "alphaR", "baddness", "badChL", "badChR"};
+        Integer[] isBad = new Integer[]{0, 0, 0};
+        Classifier classifier = new Classifier(Ws, b, true, null, null, Windows.WindowType.HANNING, WelchOutputType
+                .AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100., startMs, spectrumDescription, isBad);
+        List<Classifier> classifiers = new LinkedList<Classifier>();
+        classifiers.add(classifier);
+        ContinuousClassifier c = new ContinuousClassifier("localhost", 1973, null, "stimulus.test", "end",
+                "classifiers.prediction", 25, null, .5, 1000, classifiers, 1.);
+        Thread t = new Thread(c);
+        t.start();
     }
 }
