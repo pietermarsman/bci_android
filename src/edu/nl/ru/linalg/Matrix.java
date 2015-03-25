@@ -23,7 +23,9 @@ import static org.apache.commons.math3.stat.StatUtils.max;
 
 /**
  * Created by Pieter on 27-1-2015.
+ * 2D array with lots of functions from the Math Commons library
  */
+@SuppressWarnings("WeakerAccess")
 public class Matrix extends Array2DRowRealMatrix {
     // Methods for
     // [x] n-d arrays,
@@ -39,11 +41,11 @@ public class Matrix extends Array2DRowRealMatrix {
     // [x] covariance computation,                      > this.covariance()
     // [x] data selection (subsetting)                  > getSubMatrix()
     // [x] outlier-detection,                           > removeOutliers()
-    // [x] welch's method for spectrum estimation,      > welch()
+    // [x] welch method for spectrum estimation,      > welch()
     // [ ] fft-based spectral filtering,
     // [x] eigen-decompositions (SVD/EIG)               > this.eig() and this.svd()
 
-    private static Logger log = Logger.getLogger(Matrix.class);
+    private static final Logger log = Logger.getLogger(Matrix.class);
 
     public Matrix() {
         super();
@@ -125,7 +127,7 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("\n");
         for (int i = 0; i < getRowDimension(); i++) {
             for (int j = 0; j < getColumnDimension(); j++)
@@ -146,9 +148,9 @@ public class Matrix extends Array2DRowRealMatrix {
         return axis == 0 ? this.getRowDimension() : this.getColumnDimension();
     }
 
-    public Matrix reshape(int rows, int collumns) {
-        ParameterChecker.checkEquals(rows * collumns, this.getRowDimension() * this.getColumnDimension());
-        return new Matrix(ArrayFunctions.reshape(this.getData(), rows, collumns));
+    public Matrix reshape(int rows, int columns) {
+        ParameterChecker.checkEquals(rows * columns, this.getRowDimension() * this.getColumnDimension());
+        return new Matrix(ArrayFunctions.reshape(this.getData(), rows, columns));
     }
 
     public Matrix round(int decimals) {
@@ -166,8 +168,7 @@ public class Matrix extends Array2DRowRealMatrix {
         double[][] newMatrix = this.getData();
         double[][] oldMatrix = this.getData();
         for (int r = 0; r < oldMatrix.length; r++)
-            for (int c = 0; c < oldMatrix[r].length; c++)
-                newMatrix[newMatrix.length - r - 1][c] = oldMatrix[r][c];
+            System.arraycopy(oldMatrix[r], 0, newMatrix[newMatrix.length - r - 1], 0, oldMatrix[r].length);
         return new Matrix(newMatrix);
     }
 
@@ -435,8 +436,7 @@ public class Matrix extends Array2DRowRealMatrix {
                 for (int c = 0; c < this.getColumnDimension(); c++)
                     row[c] = this.getEntry(r, c);
                 Complex[] fftResult = fft.transform(row, direction);
-                for (int c = 0; c < this.getColumnDimension(); c++)
-                    ft[r][c] = fftResult[c];
+                System.arraycopy(fftResult, 0, ft[r], 0, this.getColumnDimension());
             }
         }
         return ft;
@@ -452,23 +452,23 @@ public class Matrix extends Array2DRowRealMatrix {
         // FIXME is returning negative of python implementation
         // FIXME slightly different from python implementation
         EigenDecomposition eig = new EigenDecomposition(this);
-        RealMatrix oldVecs = new Array2DRowRealMatrix(eig.getV().getData());
-        double[] oldVals = eig.getRealEigenvalues();
-        RealMatrix newVecs = new Array2DRowRealMatrix(eig.getV().getData());
-        double[] newVals = eig.getRealEigenvalues();
-        Integer[] sortIdx = getSortIdx(oldVals);
+        RealMatrix oldVectors = new Array2DRowRealMatrix(eig.getV().getData());
+        double[] oldValues = eig.getRealEigenvalues();
+        RealMatrix newVectors = new Array2DRowRealMatrix(eig.getV().getData());
+        double[] newValues = eig.getRealEigenvalues();
+        Integer[] sortIdx = getSortIdx(oldValues);
         for (int i = 0; i < sortIdx.length; i++) {
             Integer id = sortIdx[i];
-            newVecs.setColumn(i, oldVecs.getColumn(id));
-            newVals[i] = oldVals[id];
+            newVectors.setColumn(i, oldVectors.getColumn(id));
+            newValues[i] = oldValues[id];
         }
         if (order.equalsIgnoreCase("descending")) {
-            return new Tuple<Matrix, RealVector>(new Matrix(newVecs), new ArrayRealVector(newVals));
+            return new Tuple<Matrix, RealVector>(new Matrix(newVectors), new ArrayRealVector(newValues));
         } else {
-            Matrix eigenVecs = new Matrix(newVecs).flipLR();
-            reverseDoubleArrayInPlace(newVals);
-            RealVector eigenValues = new ArrayRealVector(newVals);
-            return new Tuple<Matrix, RealVector>(eigenVecs, eigenValues);
+            Matrix eigenVectors = new Matrix(newVectors).flipLR();
+            reverseDoubleArrayInPlace(newValues);
+            RealVector eigenValues = new ArrayRealVector(newValues);
+            return new Tuple<Matrix, RealVector>(eigenVectors, eigenValues);
         }
     }
 
@@ -491,15 +491,15 @@ public class Matrix extends Array2DRowRealMatrix {
         } else {
             // Get eigen decomposition of the covariance matrix
             Tuple<Matrix, RealVector> eigenDecomposition = this.covariance().eig("ascending");
-            Matrix eigenVecs = eigenDecomposition.x;
-            double[] eigenVals = eigenDecomposition.y.toArray();
+            Matrix eigenVectors = eigenDecomposition.x;
+            double[] eigenValues = eigenDecomposition.y.toArray();
             // Use the decomposition to create the multiplication matrix for the whiten spatial filter
-            double[] diagVals = new double[eigenVals.length];
-            double max = max(diagVals);
-            for (int i = 0; i < eigenVals.length; i++)
-                diagVals[i] = eigenVals[i] > max * whitenThres ? Math.pow(eigenVals[i], -.5) : 0.0;
-            RealMatrix diag = new DiagonalMatrix(diagVals);
-            RealMatrix transform = eigenVecs.multiply(diag).multiply(eigenVecs.transpose());
+            double[] diagValues = new double[eigenValues.length];
+            double max = max(diagValues);
+            for (int i = 0; i < eigenValues.length; i++)
+                diagValues[i] = eigenValues[i] > max * whitenThres ? Math.pow(eigenValues[i], -.5) : 0.0;
+            RealMatrix diag = new DiagonalMatrix(diagValues);
+            RealMatrix transform = eigenVectors.multiply(diag).multiply(eigenVectors.transpose());
             return new Matrix(this.preMultiply(transform));
         }
     }
@@ -578,7 +578,7 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
-    public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendp) {
+    public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendP) {
         log.debug("Applying welch algorithm: dim=" + dim + ", width=" + width);
         log.debug("Checking parameters");
         ParameterChecker.checkAxis(dim, false);
@@ -588,7 +588,7 @@ public class Matrix extends Array2DRowRealMatrix {
         ParameterChecker.checkNonZero(width);
         ParameterChecker.checkNonNegative(width);
 
-        // TODO add outtype, default is 'amp'
+        // TODO add output type, default is 'amp'
         WelchOutputType outType = WelchOutputType.AMPLITUDE;
 
         // Abbreviations
@@ -624,10 +624,10 @@ public class Matrix extends Array2DRowRealMatrix {
             // Get submatrix
             Matrix wX = new Matrix(this.getSubMatrix(idx.get(0), idx.get(1)));
 
-            // TODO add centerp (subtracting mean from the sample p
+            // TODO add centerP (subtracting mean from the sample p
 
             // Detrend submatrix
-            if (detrendp)
+            if (detrendP)
                 wX = wX.detrend(dim, "linear");
 
             // Window

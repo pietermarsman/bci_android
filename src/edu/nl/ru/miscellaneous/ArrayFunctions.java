@@ -5,6 +5,7 @@ import java.util.Comparator;
 
 /**
  * Created by Pieter on 28-1-2015.
+ * Several functions for double and integer arrays
  */
 public class ArrayFunctions {
 
@@ -16,7 +17,7 @@ public class ArrayFunctions {
         }
     }
 
-    public static double max(double[] arr, int from) {
+    public static double max(double[] arr) {
         double max = Double.NEGATIVE_INFINITY;
         for (double val : arr)
             if (val > max)
@@ -49,15 +50,15 @@ public class ArrayFunctions {
         int origM = A.length;
         int origN = A[0].length;
         if(origM*origN != m*n){
-            throw new IllegalArgumentException("New matrix must be of same area as matix A");
+            throw new IllegalArgumentException("New matrix must be of same area as matrix A");
         }
         double[][] B = new double[m][n];
         double[] A1D = new double[A.length * A[0].length];
 
         int index = 0;
-        for(int i = 0;i<A.length;i++){
-            for(int j = 0;j<A[0].length;j++){
-                A1D[index++] = A[i][j];
+        for (double[] aA : A) {
+            for (int j = 0; j < A[0].length; j++) {
+                A1D[index++] = aA[j];
             }
         }
 

@@ -2,6 +2,7 @@ package edu.nl.ru.miscellaneous;
 
 /**
  * Created by Pieter on 28-1-2015.
+ * Three values
  */
 public class Triple<X, Y, Z> {
 

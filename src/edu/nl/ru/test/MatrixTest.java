@@ -9,18 +9,19 @@ import org.apache.commons.math3.linear.RealVector;
 
 public class MatrixTest extends TestCase {
 
-    private Matrix a, b, c, d, e;
+    private Matrix a, b, c, e;
 
     protected void setUp() throws Exception {
         double[][] dataA = {{1.0, 2.0}, {5.0, 4.0}};
         double[][] dataB = {{0.5, 0.4, 0.2}, {0.3, 0.2, 0.2}, {.2, .2, .7}};
         double[][] dataC = {{1.2, -1232.0}, {-67.5, .232}};
-        double[][] dataD = {{1.2, 23., 12., 12.}, {12., 43., 432., 23.}, {3., 23.2, -12., -3.2}, {1., 1., 2., 2.}};
-        double[][] dataE = {{13.21, 32., 432., .324, 43., .1}, {234., 56., 56.6, 765., 876., .1}, {345., 34., 2123., 76., 34., .2}};
+        //        double[][] dataD = {{1.2, 23., 12., 12.}, {12., 43., 432., 23.}, {3., 23.2, -12., -3.2}, {1., 1., 2
+        // ., 2.}};
+        double[][] dataE = {{13.21, 32., 432., .324, 43., .1}, {234., 56., 56.6, 765., 876., .1}, {345., 34., 2123.,
+                76., 34., .2}};
         a = new Matrix(dataA);
         b = new Matrix(dataB);
         c = new Matrix(dataC);
-        d = new Matrix(dataD);
         e = new Matrix(dataE);
     }
 
@@ -179,24 +180,26 @@ public class MatrixTest extends TestCase {
     public void testSVD() throws Exception {
         // todo different signs than python in U (columns) and V (rows)
         Triple<Matrix, Matrix, Matrix> usv_t = b.svd();
-        double[][] goodValuesU = {{0.60584241, -0.65941226, 0.44511845}, {0.40002531, -0.2311365, -0.88687974}, {0.6877025, 0.71536801, 0.1237493}};
+        double[][] goodValuesU = {{0.60584241, -0.65941226, 0.44511845}, {0.40002531, -0.2311365, -0.88687974},
+                {0.6877025, 0.71536801, 0.1237493}};
         double[][] goodValuesS = {{0.99574753, 0., 0.}, {0., 0.44439383, 0.}, {0., 0., 0.03163813}};
-        double[][] goodValuesVT = {{0.56286285, 0.46184651, 0.68548027}, {-0.57600592 , -0.37560963, 0.72604035}, {-0.59279219 , 0.80350184, -0.05460962}};
+        double[][] goodValuesVT = {{0.56286285, 0.46184651, 0.68548027}, {-0.57600592, -0.37560963, 0.72604035},
+                {-0.59279219, 0.80350184, -0.05460962}};
         assertEquals(new Matrix(goodValuesU).round(2), usv_t.x.round(2));
         assertEquals(new Matrix(goodValuesS).round(2), usv_t.y.round(2));
         assertEquals(new Matrix(goodValuesVT).round(2), usv_t.z.round(2));
     }
 
     public void testConvolve0() throws Exception {
-        Matrix conv = b.convolve(a.getRow(0), 0);
+        Matrix convolved = b.convolve(a.getRow(0), 0);
         double[][] goodValues = {{.5, 1.4, 1., .4}, {.3, .8, .6, .4}, {.2, .6, 1.1, 1.4}};
-        assertEquals(new Matrix(goodValues).round(2), conv.round(2));
+        assertEquals(new Matrix(goodValues).round(2), convolved.round(2));
     }
 
     public void testConvolve1() throws Exception {
-        Matrix conv = b.convolve(a.getRow(0), 1);
+        Matrix convolved = b.convolve(a.getRow(0), 1);
         double[][] goodValues = {{.5, .4, .2}, {1.3, 1., .6}, {.8, .6, 1.1}, {.4, .4, 1.4}};
-        assertEquals(new Matrix(goodValues).round(2), conv.round(2));
+        assertEquals(new Matrix(goodValues).round(2), convolved.round(2));
     }
 
     public void testVar() throws Exception {
@@ -233,7 +236,7 @@ public class MatrixTest extends TestCase {
     }
 
     public void testOutlierRemoval1() throws Exception {
-        // todo python implemenation is not right
+        // todo python implementation is not right
         // todo using mu is not properly tested. All the rows/columns are deleted.
         Matrix ret = b.removeOutliers(1, -1., 1., 3, "var");
         assertTrue(ret.getRowDimension() == 2);
@@ -242,7 +245,8 @@ public class MatrixTest extends TestCase {
 
     public void testWelch() throws Exception {
         Matrix ret = e.welch(1, new double[]{.382, 1., 1., .382}, new int[]{0, 2}, 4, false);
-        double[][] good = new double[][]{{173.3378, 140.7474, 156.7158}, {551.7926, 354.3962, 85.6544}, {828.5935, 709.1306, 757.4176}};
+        double[][] good = new double[][]{{173.3378, 140.7474, 156.7158}, {551.7926, 354.3962, 85.6544}, {828.5935,
+                709.1306, 757.4176}};
         assertEquals(new Matrix(good).round(1), ret.round(1));
         // TODO check if it is correct answer
     }

@@ -2,6 +2,7 @@ package edu.nl.ru.miscellaneous;
 
 /**
  * Created by Pieter on 28-1-2015.
+ * Two values
  */
 public class Tuple<X, Y> {
 

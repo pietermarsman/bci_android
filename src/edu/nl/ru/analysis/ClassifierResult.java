@@ -4,7 +4,9 @@ import edu.nl.ru.linalg.Matrix;
 
 /**
  * Created by Pieter on 23-2-2015.
+ * Result of a Classifier
  */
+@SuppressWarnings("WeakerAccess")
 public class ClassifierResult {
 
     public final Matrix f, fraw, p, X;
@@ -24,12 +26,7 @@ public class ClassifierResult {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Classifier result: ");
-        sb.append("f").append(f.shapeString());
-        sb.append(", fraw").append(fraw.shapeString());
-        sb.append(", p").append(p.shapeString());
-        sb.append(", X").append(X.shapeString());
-        return sb.toString();
+        return "Classifier result: " + "f" + f.shapeString() + ", fraw" + fraw.shapeString() + ", p" + p.shapeString
+                () + ", X" + X.shapeString();
     }
 }

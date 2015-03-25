@@ -65,7 +65,7 @@ public class Windows {
     }
 
     private static double[] unitAmplitude(double[] window) {
-        double max = ArrayFunctions.max(window, 0);
+        double max = ArrayFunctions.max(window);
         for (int i = 0; i < window.length; i++)
             window[i] /= max;
         return window;

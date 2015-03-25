@@ -8,6 +8,7 @@ import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Created by Pieter on 4-3-2015.
+ * Testing the window functions
  */
 public class WindowTest extends TestCase {
 

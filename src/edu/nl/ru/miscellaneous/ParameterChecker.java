@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 /**
  * Created by Pieter on 23-2-2015.
+ * Default parameter checks
  */
 public class ParameterChecker {
     public static void checkString(String given, String[] options) {

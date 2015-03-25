@@ -2,6 +2,7 @@ package edu.nl.ru.miscellaneous;
 
 /**
  * Created by Pieter on 11-2-2015.
+ * Extra math functions
  */
 public class ExtraMath {
 
