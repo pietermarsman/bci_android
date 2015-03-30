@@ -2,7 +2,7 @@ package edu.nl.ru.test;
 
 import edu.nl.ru.miscellaneous.Tuple;
 import edu.nl.ru.miscellaneous.Windows;
-import junit.framework.TestCase;
+import junit.framework.TestCase;import org.junit.Assert;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -27,7 +27,7 @@ public class WindowTest extends TestCase {
     public void testWindowLocations() throws Exception {
         Tuple<int[], Integer> ret = Windows.computeWindowLocation(27, 4, .2);
         int[] good = new int[]{0, 6, 11, 17};
-        assertArrayEquals(good, ret.x);
+        Assert.assertArrayEquals(good, ret.x);
         assertEquals(7, ret.y.intValue());
     }
 }

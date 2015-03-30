@@ -24,20 +24,7 @@ public class ContinuousClassifierTest extends TestCase {
 
     /*
     Start fileplayback
-"C:\Program Files\Java\jdk1.7.0_02\bin\java" -Didea.launcher.port=7532 "-Didea.launcher.bin.path=C:\Program Files
-(x86)\JetBrains\IntelliJ IDEA Community Edition 14.0.2\bin" -Dfile.encoding=UTF-8 -classpath "C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\charsets.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\deploy.jar;C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\javaws.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\jce.jar;C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\jsse.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\management-agent.jar; C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\plugin.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\resources.jar; C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\rt.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\ext\dnsns.jar;C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\ext\localedata.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\ext\sunec.jar;C:\Program
-Files\Java\jdk1.7.0_02\jre\lib\ext\sunjce_provider.jar;C:\Program Files\Java\jdk1.7.0_02\jre\lib\ext\sunmscapi.jar;
-C:\Program Files\Java\jdk1.7.0_02\jre\lib\ext\zipfs.jar;
-C:\Users\Pieter\Documents\Projects\buffer_bci\java\out\production\java;
-C:\Users\Pieter\Documents\Projects\buffer_bci\dataAcq\buffer\java\BufferClient.jar;C:\Program Files (x86)
-\JetBrains\IntelliJ IDEA Community Edition 14.0.2\lib\idea_rt.jar" com.intellij.rt.execution.application.AppMain
-filePlayback
+\cmd
      */
 
     private static List<Matrix> loadWFromFile(String file, int rows, int columns) {
@@ -83,9 +70,9 @@ filePlayback
                 .AMPLITUDE, null, freqIdx, 1, null, null, 128, 100., new Double[]{0.}, spectrumDescription, isBad);
         classifiers.add(classifier);
         ContinuousClassifier c = new ContinuousClassifier("localhost", 1973, null, "stimulus.test", "end",
-                "classifier.prediction", null, null, .5, 1000, classifiers, null);
+                "classifier.prediction", "stimulus.startbaseline", "end", "start", .5, 1000, classifiers, null, 128, null, true);
         Thread t = new Thread(c);
         t.start();
-        Thread.sleep(100 * 1000);
+        Thread.sleep(1000 * 1000);
     }
 }

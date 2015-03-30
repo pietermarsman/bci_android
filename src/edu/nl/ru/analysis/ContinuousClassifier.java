@@ -8,9 +8,11 @@ import nl.fcdonders.fieldtrip.bufferclient.BufferEvent;
 import nl.fcdonders.fieldtrip.bufferclient.Header;
 import nl.fcdonders.fieldtrip.bufferclient.SamplesEventsCount;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -24,36 +26,44 @@ public class ContinuousClassifier implements Runnable {
     private final String bufferHost;
     private final String endValue;
     private final String predictionEventType;
+    private final String baselineEventType;
     private final String endType;
+    private final String baselineEnd;
+    private final String baselineStart;
     private final int bufferPort;
     private final Double overlap;
     private final Double predictionFilter;
-    private Integer sampleTrialLength;
     private final Integer sampleTrialMs;
     private final Integer sampleStepMs;
-    private Integer sampleStep;
     private final Integer timeoutMs;
-    private Float fs;
-    private Header header;
+    private final boolean normalizeLatitude;
     private final List<Classifier> classifiers;
     private final BufferClientClock C;
+    private Integer sampleTrialLength;
+    private Integer sampleStep;
+    private Float fs;
+    private Header header;
 
     public ContinuousClassifier(String bufferHost, int bufferPort, Header header, String endType, String endValue,
-                                String predictionEventType, Integer sampleTrialLength, Integer sampleTrialMs, Double
-            overlap, Integer timeoutMs, List<Classifier> classifiers, Double predictionFilter) {
-        log.setLevel(null);
+                                String predictionEventType, String baseLineEventType, String baselineEnd, String baselineStart, Double
+            overlap, Integer timeoutMs, List<Classifier> classifiers, Double predictionFilter, Integer sampleTrialLength, Integer sampleTrialMs, boolean normalizeLatitude) {
+        log.setLevel(Level.DEBUG);
         this.bufferHost = bufferHost;
         this.bufferPort = bufferPort;
         this.header = header;
         this.endType = endType;
         this.endValue = endValue;
         this.predictionEventType = predictionEventType;
+        this.baselineEnd = baselineEnd;
+        this.baselineStart = baselineStart;
+        this.baselineEventType = baseLineEventType;
         this.sampleTrialLength = sampleTrialLength;
         this.sampleTrialMs = sampleTrialMs;
         this.overlap = overlap;
         this.timeoutMs = timeoutMs;
         this.classifiers = classifiers;
         this.predictionFilter = predictionFilter;
+        this.normalizeLatitude = normalizeLatitude;
 
         // Compute parameters
         //        this.sampleStepMs = (int) Math.round(this.sampleTrialLength * this.overlap);
@@ -80,21 +90,23 @@ public class ContinuousClassifier implements Runnable {
         List<Classifier> classifiers = new LinkedList<Classifier>();
         classifiers.add(classifier);
         ContinuousClassifier c = new ContinuousClassifier("localhost", 1973, null, "stimulus.test", "end",
-                "classifiers.prediction", 25, null, .5, 1000, classifiers, 1.);
+                "classifiers.prediction", "stimulus.baseline", "end", "start", .5, 1000, classifiers, 1., 25, null, true);
         Thread t = new Thread(c);
         t.start();
     }
 
     private void setNullFields() {
+        // Set fs
+        if (header != null) {
+            fs = header.fSample;
+        } else {
+            log.error("First connect to the buffer");
+        }
+
         // Set trial length
         if (sampleTrialLength == null) {
             sampleTrialLength = 0;
             if (sampleTrialMs != null) {
-                if (header != null) {
-                    fs = header.fSample;
-                } else {
-                    log.error("First connect to the buffer");
-                }
                 Float ret = sampleTrialMs / 1000 * fs;
                 sampleTrialLength = ret.intValue();
             }
@@ -155,6 +167,12 @@ public class ContinuousClassifier implements Runnable {
         // Now do the echo-server
         int nEvents = header.nEvents, nSamples = header.nSamples;
 
+        Matrix baseLineVal = Matrix.zeros(classifiers.get(0).getOutputSize()-1, 1);
+        Matrix baseLineVar = Matrix.ones(classifiers.get(0).getOutputSize() - 1, 1);
+        boolean baselinephase = false;
+        int nBaseline = 0;
+        Matrix dvBaseline = null;
+        Matrix dv2Baseline = null;
         Matrix dv = null;
         boolean endExpected = false;
         long t0 = 0;
@@ -221,6 +239,23 @@ public class ContinuousClassifier implements Runnable {
                                 predictionFilter)));
                     }
                 }
+                // Postprocessing of alpha lat score
+                double[] dvColumn = dv.getColumn(0);
+                dv = new Matrix(dvColumn.length - 1, 1);
+                dv.setColumn(0, Arrays.copyOfRange(dvColumn, 1, dvColumn.length));
+                if (normalizeLatitude)
+                    dv.setEntry(0, 0, (dvColumn[0] - dvColumn[1]) / (dvColumn[0] + dvColumn[1]));
+                else
+                    dv.setEntry(0, 0, dvColumn[0] - dvColumn[1]);
+
+                // Update baseline
+                if (baselinephase) {
+                    nBaseline++;
+                    dvBaseline = new Matrix(dvBaseline.add(dv));
+                    dv2Baseline = new Matrix(dv2Baseline.add(dv.multiplyElements(dv)));
+                }
+
+                dv = new Matrix(dv.subtract(baseLineVal)).multiplyElements(baseLineVar);
 
                 // Send prediction event
                 BufferEvent event = new BufferEvent(predictionEventType + "_JAVA", dv.getColumn(0), from);
@@ -240,15 +275,32 @@ public class ContinuousClassifier implements Runnable {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                boolean any = false;
+
                 for (BufferEvent event : events) {
-                    any = any || (event.getType().getArray().equals(endType) && event.getValue().getArray().equals
-                            (endValue));
-                    log.info("GET EVENT (" + event.sample + "): " + event.getType() + ", value: " + event.getValue());
-                }
-                if (any) {
-                    log.info("Got exit event. Stopping");
-                    endExpected = true;
+                    String type = event.getType().toString();
+                    String value = event.getValue().toString();
+                    log.info("GET EVENT (" + event.sample + "): " + type + ", value: " + value);
+                    if (type.equals(endType) && value.equals(endValue)) {
+                        log.info("End expected");
+                        endExpected = true;
+                    }
+                    else if (type.equals(baselineEventType) && value.equals(baselineEnd)) {
+                        log.info("Baseline end event received");
+                        baselinephase = false;
+                        double scale = 1. / nBaseline;
+                        baseLineVal = new Matrix(dvBaseline.scalarMultiply(scale));
+                        baseLineVar = new Matrix(new Matrix(dv2Baseline.subtract(dvBaseline.multiplyElements(dvBaseline).scalarMultiply(scale))).abs().scalarMultiply(scale)).sqrt();
+                        log.info("Baseline val: " + Arrays.toString(baseLineVal.getColumn(0)));
+                        log.info("Baseline var: " + Arrays.toString(baseLineVar.getColumn(0)));
+                    }
+                    else if (type.equals(baselineEventType) && value.equals(baselineStart)) {
+                        log.info("Baseline start event received");
+                        baselinephase = true;
+                        nBaseline = 0;
+                        dvBaseline = Matrix.zeros(classifiers.get(0).getOutputSize() - 1, 1);
+                        dv2Baseline = Matrix.ones(classifiers.get(0).getOutputSize() - 1, 1);
+                    }
+
                 }
                 nEvents = status.nEvents;
             }
