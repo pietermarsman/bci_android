@@ -2,7 +2,6 @@ package edu.nl.ru.analysis;
 
 import edu.nl.ru.linalg.Matrix;
 import edu.nl.ru.linalg.WelchOutputType;
-import edu.nl.ru.miscellaneous.Tuple;
 import edu.nl.ru.miscellaneous.Windows;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClientClock;
 import nl.fcdonders.fieldtrip.bufferclient.BufferEvent;
@@ -31,7 +30,6 @@ public class ContinuousClassifier implements Runnable {
     private final String endType;
     private final String baselineEnd;
     private final String baselineStart;
-    private final Integer nBaselineStep;
     private final int bufferPort;
     private final Double overlap;
     private final Double predictionFilter;
@@ -47,8 +45,8 @@ public class ContinuousClassifier implements Runnable {
     private Header header;
 
     public ContinuousClassifier(String bufferHost, int bufferPort, Header header, String endType, String endValue,
-                                String predictionEventType, String baseLineEventType, String baselineEnd, String baselineStart, Integer nBaselineStep, Double
-            overlap, Integer timeoutMs, Integer sampleStepMs, List<Classifier> classifiers, Double predictionFilter, Integer sampleTrialLength, Integer sampleTrialMs, boolean normalizeLatitude) {
+                                String predictionEventType, String baseLineEventType, String baselineEnd, String baselineStart, Double
+            overlap, Integer timeoutMs, List<Classifier> classifiers, Double predictionFilter, Integer sampleTrialLength, Integer sampleTrialMs, boolean normalizeLatitude) {
         log.setLevel(Level.DEBUG);
         this.bufferHost = bufferHost;
         this.bufferPort = bufferPort;
@@ -66,14 +64,14 @@ public class ContinuousClassifier implements Runnable {
         this.classifiers = classifiers;
         this.predictionFilter = predictionFilter;
         this.normalizeLatitude = normalizeLatitude;
-        this.sampleStepMs = sampleStepMs;
+
+        // Compute parameters
+        //        this.sampleStepMs = (int) Math.round(this.sampleTrialLength * this.overlap);
+        this.sampleStepMs = null;
 
         C = new BufferClientClock();
         connect();
         setNullFields();
-
-        this.nBaselineStep = new Double(Math.round(nBaselineStep / 1000. * this.fs / sampleStep)).intValue();
-
         log.info(this);
     }
 
@@ -91,8 +89,8 @@ public class ContinuousClassifier implements Runnable {
                 .AMPLITUDE, timeIdx, freqIdx, 1, null, null, 2, 100., startMs, spectrumDescription, isBad);
         List<Classifier> classifiers = new LinkedList<Classifier>();
         classifiers.add(classifier);
-        ContinuousClassifier c = new ContinuousClassifier("localhost", 1972, null, "stimulus.test", "end",
-                "classifiers.prediction", "stimulus.baseline", null, "start", 5000, .5, 1000, 500, classifiers, 1., 25, null, true);
+        ContinuousClassifier c = new ContinuousClassifier("localhost", 1973, null, "stimulus.test", "end",
+                "classifiers.prediction", "stimulus.baseline", "end", "start", .5, 1000, classifiers, 1., 25, null, true);
         Thread t = new Thread(c);
         t.start();
     }
@@ -121,7 +119,7 @@ public class ContinuousClassifier implements Runnable {
 
         // Set wait time
         if (sampleStepMs != null) {
-            sampleStep = new Double(Math.round(sampleStepMs / 1000.0 * fs)).intValue();
+            sampleStep = Math.round(sampleStepMs / 1000 * fs);
         } else {
             sampleStep = new Long(Math.round(sampleTrialLength * overlap)).intValue();
         }
@@ -178,6 +176,8 @@ public class ContinuousClassifier implements Runnable {
         Matrix dv = null;
         boolean endExpected = false;
         long t0 = 0;
+
+        log.info(this);
 
         while (!endExpected) {
             // Getting data from buffer
@@ -253,13 +253,6 @@ public class ContinuousClassifier implements Runnable {
                     nBaseline++;
                     dvBaseline = new Matrix(dvBaseline.add(dv));
                     dv2Baseline = new Matrix(dv2Baseline.add(dv.multiplyElements(dv)));
-                    if (nBaselineStep != null && nBaseline > nBaselineStep) {
-                        log.info("Baseline timeout\n");
-                        baselinephase = false;
-                        Tuple<Matrix, Matrix> ret = baselineValues(dvBaseline, dv2Baseline, nBaseline);
-                        baseLineVal = ret.x;
-                        baseLineVar = ret.y;
-                    }
                 }
 
                 dv = new Matrix(dv.subtract(baseLineVal)).multiplyElements(baseLineVar);
@@ -294,9 +287,11 @@ public class ContinuousClassifier implements Runnable {
                     else if (type.equals(baselineEventType) && value.equals(baselineEnd)) {
                         log.info("Baseline end event received");
                         baselinephase = false;
-                        Tuple<Matrix, Matrix> ret = baselineValues(dvBaseline, dv2Baseline, nBaseline);
-                        baseLineVal = ret.x;
-                        baseLineVar = ret.y;
+                        double scale = 1. / nBaseline;
+                        baseLineVal = new Matrix(dvBaseline.scalarMultiply(scale));
+                        baseLineVar = new Matrix(new Matrix(dv2Baseline.subtract(dvBaseline.multiplyElements(dvBaseline).scalarMultiply(scale))).abs().scalarMultiply(scale)).sqrt();
+                        log.info("Baseline val: " + Arrays.toString(baseLineVal.getColumn(0)));
+                        log.info("Baseline var: " + Arrays.toString(baseLineVar.getColumn(0)));
                     }
                     else if (type.equals(baselineEventType) && value.equals(baselineStart)) {
                         log.info("Baseline start event received");
@@ -317,27 +312,12 @@ public class ContinuousClassifier implements Runnable {
         }
     }
 
-    public Tuple<Matrix, Matrix> baselineValues(Matrix dvBaseline, Matrix dv2Baseline, int nBaseline) {
-        double scale = 1. / nBaseline;
-        Matrix baseLineVal = new Matrix(dvBaseline.scalarMultiply(scale));
-        Matrix baseLineVar = new Matrix(new Matrix(dv2Baseline.subtract(dvBaseline.multiplyElements(dvBaseline).scalarMultiply(scale))).abs().scalarMultiply(scale)).sqrt();
-        log.info("Baseline val: " + Arrays.toString(baseLineVal.getColumn(0)));
-        log.info("Baseline var: " + Arrays.toString(baseLineVar.getColumn(0)));
-        return new Tuple<Matrix, Matrix>(baseLineVal, baseLineVar);
-    }
-
     public String toString() {
         return "\nContinuousClassifier with parameters:" + "\nBuffer host:  \t" + bufferHost + "\nBuffer port:  \t" +
                 bufferPort + "\nHeader:\n     \t" + header + "\nEnd type:     \t" + endType + "\nEnd value:    \t" +
                 endValue + "\nLogger level: \t" + log.getLevel() + "\npredEventType:\t" + predictionEventType +
-                "\nTrial ms:     \t" + sampleTrialMs + "\nTrial samples:\t" + sampleTrialLength + "\nOverlap:      \t" +
-                overlap + "\nStep ms:      \t" + sampleStepMs + "\nPred filter:    \t" + predictionFilter +
-                "\nTimeout ms:   \t" + timeoutMs +
-                "\nPred type    \t" + predictionEventType +
-                "\nBaseline end \t" + baselineEnd +
-                "\nBaseline start\t" + baselineStart +
-                "\nBaseline step\t" + nBaselineStep +
-                "\nNormalize lat\t" + normalizeLatitude +
-                "\nFs           \t" + fs;
+                "\nTrial ms:     \t" + "null" + "\nTrial samples:\t" + sampleTrialLength + "\nOverlap:      \t" +
+                overlap + "\nStep ms:      \t" + sampleStepMs + "\nPred filter:    \t" + predictionFilter + "\nTimeout " +
+                "ms:   \t" + timeoutMs;
     }
 }
