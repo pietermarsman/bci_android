@@ -42,10 +42,7 @@ public class Classifier {
     private final Double samplingFrequency;
     private final Windows.WindowType windowType;
 
-    public Classifier(List<Matrix> W, RealVector b, Boolean detrend, Double badChannelThreshold, Windows.WindowType
-            windowType, WelchOutputType welchAveType, Integer[] timeIdx, Integer[] freqIdx, Integer dimension,
-                      Double[] spatialFilter, Matrix spMx, Integer windowLength, Double samplingFrequency, Double[]
-            startMs, String[] spectrumDescription, Integer[] isBad) {
+    public Classifier(List<Matrix> W, RealVector b, Boolean detrend, Double badChannelThreshold, Windows.WindowType windowType, WelchOutputType welchAveType, Integer[] timeIdx, Integer[] freqIdx, Integer dimension, Double[] spatialFilter, Matrix spMx, Integer windowLength, Double samplingFrequency, Double[] startMs, String[] spectrumDescription, Integer[] isBad) {
 
         ParameterChecker.checkString(welchAveType.toString(), new String[]{"AMPLITUDE", "power", "db"});
 
@@ -209,12 +206,9 @@ public class Classifier {
     }
 
     public Integer getSampleTrialLength(Integer sampleTrialLength) {
-        if (outSize != null)
-            return Math.max(sampleTrialLength, outSize[0]);
-        else if (timeIdx != null)
-            return Math.max(sampleTrialLength, timeIdx[1]);
-        else if (windowFn != null)
-            return Math.max(sampleTrialLength, windowFn.length);
+        if (outSize != null) return Math.max(sampleTrialLength, outSize[0]);
+        else if (timeIdx != null) return Math.max(sampleTrialLength, timeIdx[1]);
+        else if (windowFn != null) return Math.max(sampleTrialLength, windowFn.length);
         throw new RuntimeException("Either outSize, timeIdx or windowFn should be defined");
     }
 
@@ -225,13 +219,8 @@ public class Classifier {
     public String toString() {
         return "Classifier with parameters:" + "\nWindow Fn length:  \t" + windowFn.length + "\nstartMs            " +
                 "\t" + Arrays.toString(startMs) + "\nSpatial filter     \t" + Arrays.toString(spatialFilter) + "\nWs shape            " +
-                "\t" + (Ws != null ? Ws.get(0).shapeString() : "null") + "\nSpectrum mx shape  \t" + (spectrumMx !=
-                null ? spectrumMx.shapeString() : "null") + "\nb                  \t" + b + "\nSpectrum desc      \t"
-                + Arrays.toString(spectrumDescription) + "\nType               \t" + type + "\nWelch ave type     \t"
-                + welchAveType + "\nDetrend            \t" + detrend + "\nBad channel thres  \t" +
-                badChannelThreshold + "\nTime idx           \t" + Arrays.toString(timeIdx) + "\nFrequency idx      \t" + Arrays
-                .toString(freqIdx) + "\nIs bad channel    \t" + Arrays.toString(isBad) + "\nDimension          \t" +
-                dimension + "\nWindow length      \t" + windowLength + "\nSampling frequency \t" + samplingFrequency
-                + "\nWindow type        \t" + windowType;
+                "\t" + (Ws != null ? Ws.get(0).shapeString() : "null") + "\nSpectrum mx shape  \t" + (spectrumMx != null ? spectrumMx.shapeString() : "null") + "\nb                  \t" + b + "\nSpectrum desc      \t" + Arrays.toString(spectrumDescription) + "\nType               \t" + type + "\nWelch ave type     \t" + welchAveType + "\nDetrend            \t" + detrend + "\nBad channel thres  \t" +
+                badChannelThreshold + "\nTime idx           \t" + Arrays.toString(timeIdx) + "\nFrequency idx      \t" + Arrays.toString(freqIdx) + "\nIs bad channel    \t" + Arrays.toString(isBad) + "\nDimension          \t" +
+                dimension + "\nWindow length      \t" + windowLength + "\nSampling frequency \t" + samplingFrequency + "\nWindow type        \t" + windowType;
     }
 }

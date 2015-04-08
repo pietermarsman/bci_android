@@ -289,8 +289,7 @@ public class ContinuousClassifier extends ThreadBase {
                 else f.setEntry(0, 0, dvColumn[0] - dvColumn[1]);
 
                 // Smooth the classifiers
-                if (dv == null || predictionFilter == null)
-                    dv = f;
+                if (dv == null || predictionFilter == null) dv = f;
                 else {
                     if (predictionFilter > 0.) {
                         dv = new Matrix(dv.scalarMultiply(predictionFilter).add(f.scalarMultiply(1. - predictionFilter)));

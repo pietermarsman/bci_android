@@ -176,14 +176,13 @@ public class MuseConnection extends ThreadBase {
     @Override
     public void stop() {
         disconectMuse();
-        if (client != null)
-            try {
-                client.disconnect();
-            } catch (IOException e) {
-                Log.e(TAG, Log.getStackTraceString(e));
-            } finally {
-                client = null;
-            }
+        if (client != null) try {
+            client.disconnect();
+        } catch (IOException e) {
+            Log.e(TAG, Log.getStackTraceString(e));
+        } finally {
+            client = null;
+        }
 
         super.stop();
     }

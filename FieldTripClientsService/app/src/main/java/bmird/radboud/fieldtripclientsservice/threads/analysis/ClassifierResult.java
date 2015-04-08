@@ -26,7 +26,6 @@ public class ClassifierResult {
     }
 
     public String toString() {
-        return "Classifier result: " + "f" + f.shapeString() + ", fraw" + fraw.shapeString() + ", p" + p.shapeString
-                () + ", X" + X.shapeString();
+        return "Classifier result: " + "f" + f.shapeString() + ", fraw" + fraw.shapeString() + ", p" + p.shapeString() + ", X" + X.shapeString();
     }
 }
