@@ -1,0 +1,26 @@
+package bmird.radboud.fieldtripclientsservice.base;
+
+import android.content.Context;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+public interface AndroidHandle {
+
+	public FileInputStream openReadFile(String path) throws IOException;
+
+	public FileOutputStream openWriteFile(String path) throws IOException;
+
+	public void toast(String message);
+
+	public void toastLong(String message);
+
+	public void updateStatus(String status);
+
+    /**
+     * Useful for revering to the environment of the android device
+     * @return The android context
+     */
+    public Context getContext();
+}
