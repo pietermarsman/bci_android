@@ -1,4 +1,4 @@
-# Prerequisit
+# PREREQUISITE
 - Android Studio or Intellij
 - Android Development Kit
 - Packages from Android SDK Manager:
@@ -9,9 +9,9 @@
 	- Android Support Repository (rev 12)
 	- Android Support Library (rev 22)
 
-# Dependencies
+# DEPENDENCIES
 
-# Install instructions
+# INSTALL INSTRUCTIONS
 
 ## UnityFieldtripBufferServiceController
 
