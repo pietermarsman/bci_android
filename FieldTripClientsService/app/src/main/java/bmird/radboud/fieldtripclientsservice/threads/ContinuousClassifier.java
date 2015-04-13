@@ -53,6 +53,11 @@ public class ContinuousClassifier extends ThreadBase {
     private Float fs;
     private Header header;
 
+    /**
+     * Creates a ContinuousClassifier using a file stored in the project
+     * @param android used for getting a file
+     * @return List of classifers (only one)
+     */
     private static List<Classifier> createClassifiers(AndroidHandle android) {
         List<Matrix> Ws = loadWFromFile(3, 56, android.getContext());
         RealVector b = Matrix.zeros(5, 1).getColumnVector(0);
@@ -65,6 +70,13 @@ public class ContinuousClassifier extends ThreadBase {
         return classifiers;
     }
 
+    /**
+     * Load the linear classifier data from a file on the android device
+     * @param rows The number of rows it should have
+     * @param columns The number of columns is should have
+     * @param context android context to get the file
+     * @return List of matrixes that are used for a linear classifier.
+     */
     private static List<Matrix> loadWFromFile(int rows, int columns, Context context) {
 
         InputStream is = null;
@@ -104,18 +116,24 @@ public class ContinuousClassifier extends ThreadBase {
         return matrices;
     }
 
+    /**
+     * Compute the necassery variable using the variables that were set by the user. Throws an error if to few variables
+     * are set.
+     */
     private void setNullFields() {
         // Set trial length
         if (header != null) {
             fs = header.fSample;
         } else {
-            Log.e(getClass().toString(), "First connect to the buffer");
+            throw new RuntimeException("First connect to the buffer");
         }
         if (sampleTrialLength == null) {
             sampleTrialLength = 0;
             if (sampleTrialMs != null) {
                 Float ret = sampleTrialMs / 1000 * fs;
                 sampleTrialLength = ret.intValue();
+            } else {
+                throw new IllegalArgumentException("sampleTrialLength and sampleTrialMs should not both be zero");
             }
         }
 
@@ -132,6 +150,9 @@ public class ContinuousClassifier extends ThreadBase {
         }
     }
 
+    /**
+     * connects to the buffer
+     */
     private void connect() {
         while (header == null) {
             try {
@@ -289,7 +310,8 @@ public class ContinuousClassifier extends ThreadBase {
                 else f.setEntry(0, 0, dvColumn[0] - dvColumn[1]);
 
                 // Smooth the classifiers
-                if (dv == null || predictionFilter == null) dv = f;
+                if (dv == null || predictionFilter == null)
+                    dv = f;
                 else {
                     if (predictionFilter > 0.) {
                         dv = new Matrix(dv.scalarMultiply(predictionFilter).add(f.scalarMultiply(1. - predictionFilter)));
@@ -367,6 +389,13 @@ public class ContinuousClassifier extends ThreadBase {
         }
     }
 
+    /**
+     * Computes the baseline values after the baseline has ended
+     * @param dvBaseline the dv values of the baseline
+     * @param dv2Baseline the squared dv values of the baseline
+     * @param nBaseline the number of samples the dv is based on
+     * @return The mean and variance of the baseline
+     */
     public Tuple<Matrix, Matrix> baselineValues(Matrix dvBaseline, Matrix dv2Baseline, int nBaseline) {
         double scale = 1. / nBaseline;
         Matrix baseLineVal = new Matrix(dvBaseline.scalarMultiply(scale));

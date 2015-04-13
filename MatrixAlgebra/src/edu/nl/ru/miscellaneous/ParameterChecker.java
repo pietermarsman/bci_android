@@ -62,6 +62,7 @@ public class ParameterChecker {
 
     public static void checkPower(int a, int base) throws IllegalArgumentException{
         Double exp = Math.log(a) / Math.log(base);
+        //noinspection EqualsBetweenInconvertibleTypes
         if (exp.equals(Math.round(exp)))
             throw new IllegalArgumentException("Should be a power of " + base + " but " + a + " is not");
     }

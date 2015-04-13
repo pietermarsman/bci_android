@@ -22,50 +22,68 @@ import static org.apache.commons.math3.stat.StatUtils.max;
  * Created by Pieter on 27-1-2015.
  * 2D array with lots of functions from the Math Commons library
  */
-@SuppressWarnings("WeakerAccess")
 public class Matrix extends Array2DRowRealMatrix {
-    // Methods for
-    // [x] n-d arrays,
-    // [x] matrix-matrix and                            > multiply
-    // [x] matrix-vector products,                      > operate (M*v) and preMultiply (v*M)
-    // [x] mean computation,                            > this.mean()
-    // [x] sum-along a dimension,                       > this.sum()
-    // [x] FFT,                                         > this.fft()
-    // [x] inverse FFT,                                 > this.ifft()
-    // [x] temporal filtering,                          > this.spatialFilter()
-    // [x] convolution,                                 > this.convolve()
-    // [x] detrending,                                  > this.detrend()
-    // [x] covariance computation,                      > this.covariance()
-    // [x] data selection (subsetting)                  > getSubMatrix()
-    // [x] outlier-detection,                           > removeOutliers()
-    // [x] welch method for spectrum estimation,      > welch()
-    // [ ] fft-based spectral filtering,
-    // [x] eigen-decompositions (SVD/EIG)               > this.eig() and this.svd()
 
+    /**
+     * Uninitialized matrix
+     */
     public Matrix() {
         super();
     }
 
+    /**
+     * Column matrix
+     *
+     * @param v values in the first column
+     */
     public Matrix(double[] v) {
         super(v);
     }
 
+    /**
+     * Matrix with values
+     *
+     * @param d the values in the matrix. First index is rows, second columns.
+     */
     public Matrix(double[][] d) {
         super(d);
     }
 
+    /**
+     * Matrix with values
+     *
+     * @param d         the values in the matrix. First index is rows, second columns.
+     * @param copyArray If the array should be copied.
+     */
     public Matrix(double[][] d, boolean copyArray) {
         super(d, copyArray);
     }
 
+    /**
+     * Empty matrix with specific dimensions
+     * @param rowDimension number of rows
+     * @param columnDimension number of columns
+     */
     public Matrix(int rowDimension, int columnDimension) {
         super(rowDimension, columnDimension);
     }
 
+    /**
+     * Extend functionality of RealMatrix with Matrix properties
+     *
+     * @param m the to-be-copied RealMatrix
+     */
     public Matrix(RealMatrix m) {
         super(m.getData());
     }
 
+    /**
+     * Creates a matrix with all zeros
+     *
+     * @param dim0 the number of rows
+     * @param dim1 the number of columns
+     * @return Matrix with dimensions dim0xdim1
+     */
     public static Matrix zeros(int dim0, int dim1) {
         ParameterChecker.checkNonNegative(dim0);
         ParameterChecker.checkNonNegative(dim1);
@@ -74,6 +92,13 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(zeros);
     }
 
+    /**
+     * Creates a matrix with all ones
+     *
+     * @param dim0 the number of rows
+     * @param dim1 the number of columns
+     * @return Matrix with dimensions dim0xdim1
+     */
     public static Matrix ones(int dim0, int dim1) {
         ParameterChecker.checkNonNegative(dim0);
         ParameterChecker.checkNonNegative(dim1);
@@ -82,6 +107,12 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(new Array2DRowRealMatrix(zeros).scalarAdd(1.0));
     }
 
+    /**
+     * Identity matrix
+     *
+     * @param dim row and column dimension of the matrix.
+     * @return Square matrix with dimensions dimxdim
+     */
     public static Matrix eye(int dim) {
         ParameterChecker.checkNonNegative(dim);
 
@@ -91,12 +122,26 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(new DiagonalMatrix(ones));
     }
 
+    /**
+     * Car matrix with values 1 - (1 / size) on the diagonal and -(1 / size) off the diagonal
+     *
+     * @param size The size of the matrix
+     * @return Matrix with dimensions sizexsize
+     */
     public static Matrix car(int size) {
         ParameterChecker.checkNonNegative(size);
 
         return new Matrix(Matrix.eye(size).scalarAdd(-1.0 / ((double) size)));
     }
 
+    /**
+     * Array with values in an interval and step size
+     *
+     * @param start of the interval
+     * @param end   of the interval
+     * @param step  size between the values
+     * @return int array with size (start - end) / step
+     */
     public static int[] range(int start, int end, int step) {
         ParameterChecker.checkNonZero(step);
         int size = (int) Math.ceil(((double) (end - start)) / step);
@@ -109,6 +154,14 @@ public class Matrix extends Array2DRowRealMatrix {
         return arr;
     }
 
+    /**
+     * Array with values in an interval and step size
+     *
+     * @param start of the interval
+     * @param end   of the interval
+     * @param step  size between the values
+     * @return double array of size (end - start) / step
+     */
     public static double[] range(double start, double end, double step) {
         ParameterChecker.checkNonZero(step);
 
@@ -132,21 +185,45 @@ public class Matrix extends Array2DRowRealMatrix {
         return sb.toString();
     }
 
+    /**
+     * String representation of the size of the matrix
+     *
+     * @return (rows, columns)
+     */
     public String shapeString() {
         return "(" + this.getRowDimension() + ", " + this.getColumnDimension() + ")";
     }
 
+    /**
+     * Dimensions on a particular axis
+     *
+     * @param axis should be 0 or 1. 0 are the rows, 1 the columns.
+     * @return size of the Matrix on the rows or columns
+     */
     public int getDimension(int axis) {
         ParameterChecker.checkAxis(axis);
 
         return axis == 0 ? this.getRowDimension() : this.getColumnDimension();
     }
 
+    /**
+     * Reshape the matrix into a new form. New size should have the same number of elements as current size.
+     *
+     * @param rows    new number of rows
+     * @param columns new number of columns
+     * @return new Matrix with reshaped values
+     */
     public Matrix reshape(int rows, int columns) {
         ParameterChecker.checkEquals(rows * columns, this.getRowDimension() * this.getColumnDimension());
         return new Matrix(ArrayFunctions.reshape(this.getData(), rows, columns));
     }
 
+    /**
+     * Round the values of the matrix
+     *
+     * @param decimals the number of decimals to round to
+     * @return new Matrix with rounded values
+     */
     public Matrix round(int decimals) {
         ParameterChecker.checkNonNegative(decimals);
 
@@ -158,6 +235,11 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(data);
     }
 
+    /**
+     * Flip the matrix upside down. Columns are inverted.
+     *
+     * @return new matrix with inverted columns.
+     */
     public Matrix flipUD() {
         double[][] newMatrix = this.getData();
         double[][] oldMatrix = this.getData();
@@ -166,6 +248,11 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(newMatrix);
     }
 
+    /**
+     * Flip the matrix from left to right. Rows are inverted.
+     *
+     * @return new matrix with inverted rows.
+     */
     public Matrix flipLR() {
         double[][] newMatrix = this.getData();
         double[][] oldMatrix = this.getData();
@@ -175,6 +262,13 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(newMatrix);
     }
 
+    /**
+     * Repeats the current matrix into a particular direction.
+     *
+     * @param repeats number of times to repeat
+     * @param axis    direction in which to repeat (0 is rows, 1 is columns)
+     * @return new matrix with repeated values along a particular axis. Total matrix is repeated, not the specific values.
+     */
     public Matrix repeat(int repeats, int axis) {
         ParameterChecker.checkAxis(axis);
         ParameterChecker.checkRepeats(repeats);
@@ -202,6 +296,11 @@ public class Matrix extends Array2DRowRealMatrix {
         return repeated;
     }
 
+    /**
+     * Absolute values of the matrix
+     *
+     * @return new matrix with non-zero elements
+     */
     public Matrix abs() {
         Matrix m = new Matrix(this.copy());
         m.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
@@ -213,6 +312,11 @@ public class Matrix extends Array2DRowRealMatrix {
         return m;
     }
 
+    /**
+     * Element wise square root of the matrix
+     *
+     * @return new matrix
+     */
     public Matrix sqrt() {
         Matrix m = new Matrix(this.copy());
         m.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
@@ -224,10 +328,21 @@ public class Matrix extends Array2DRowRealMatrix {
         return m;
     }
 
+    /**
+     * Mean along all values of the matrix
+     *
+     * @return new matrix with one element, which is the mean of the current matrix
+     */
     public Matrix mean() {
         return mean(-1);
     }
 
+    /**
+     * Mean along a particular axis
+     *
+     * @param axis the axis (0 is rows, 1 is columns)
+     * @return new matrix with one column that are the means of the rows or columns of the current matrix.
+     */
     public Matrix mean(int axis) {
         ParameterChecker.checkAxis(axis, true);
 
@@ -241,14 +356,26 @@ public class Matrix extends Array2DRowRealMatrix {
         else
             throw new IllegalArgumentException("Wrong axis selected. Should be either -1, 0 or 1 but is " + axis);
         scalar = 1.0 / scalar;
-        return new Matrix(sum(axis).scalarMultiply(scalar));
+        return new Matrix(this.sum(axis).scalarMultiply(scalar));
     }
 
+    /**
+     * Median along a particular axis
+     *
+     * @param axis the axis (0 is rows, 1 is columns)
+     * @return new matrix with one column that are the medians of the rows or columns of the current matrix.
+     */
     public Matrix median(int axis) {
         Median med = new Median();
         return this.evaluateUnivariateStatistic(axis, med);
     }
 
+    /**
+     * Element wise multiplication of the current matrix with another. Matrices should have same shape.
+     *
+     * @param b the other matrix
+     * @return new matrix were each element is the this_{ij}*b_{ij}
+     */
     public Matrix multiplyElements(final Matrix b) {
         ParameterChecker.checkEquals(this.getRowDimension(), b.getRowDimension());
         ParameterChecker.checkEquals(this.getColumnDimension(), b.getColumnDimension());
@@ -262,19 +389,13 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(c);
     }
 
-    public Matrix divideElements(final Matrix b) {
-        ParameterChecker.checkEquals(this.getRowDimension(), b.getRowDimension());
-        ParameterChecker.checkEquals(this.getColumnDimension(), b.getColumnDimension());
-
-        RealMatrix c = this.copy();
-        c.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
-            public double visit(int row, int column, double value) {
-                return value / b.getEntry(row, column);
-            }
-        });
-        return new Matrix(c);
-    }
-
+    /**
+     * Compute a univariate statistic over the matrix.
+     *
+     * @param axis direction of computation
+     * @param stat the statistic
+     * @return new matrix with one column
+     */
     public Matrix evaluateUnivariateStatistic(int axis, AbstractUnivariateStatistic stat) {
         ParameterChecker.checkAxis(axis, true);
 
@@ -293,10 +414,21 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(data);
     }
 
+    /**
+     * Sum of all the elements in the matrix
+     *
+     * @return Matrix with one value
+     */
     public Matrix sum() {
         return sum(-1);
     }
 
+    /**
+     * Sum of the elements along a particular direction
+     *
+     * @param axis the direction (0 is rows, 1 is columns)
+     * @return the new matrix with one column
+     */
     public Matrix sum(int axis) {
         ParameterChecker.checkAxis(axis, true);
 
@@ -331,21 +463,43 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
+    /**
+     * Covariance of the columns of the matrix
+     *
+     * @return covariance matrix with size columnsxcolumns
+     */
     public Matrix covariance() {
         Covariance cov = new Covariance(this.transpose(), true);
         return new Matrix(cov.getCovarianceMatrix());
     }
 
+    /**
+     * Variance of the values in a particular direction
+     *
+     * @param axis the direction (0 is rows, 1 is columns)
+     * @return new matrix with one column
+     */
     public Matrix variance(int axis) {
         Variance var = new Variance(false);
         return this.evaluateUnivariateStatistic(axis, var);
     }
 
+    /**
+     * Standard deviation of the values in a particular direction
+     *
+     * @param axis the direction (0 is rows, 1 is columns)
+     * @return new matrix with one column
+     */
     public Matrix std(int axis) {
         StandardDeviation std = new StandardDeviation();
         return this.evaluateUnivariateStatistic(axis, std);
     }
 
+    /**
+     * Flatten the matrix into a matrix with one column
+     *
+     * @return new matrix with one column
+     */
     public Matrix flatten() {
         double[] data = new double[this.getRowDimension() * this.getColumnDimension()];
         for (int r = 0; r < this.getRowDimension(); r++)
@@ -354,6 +508,14 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(data);
     }
 
+    /**
+     * Detrend the matrix into a particular direction. Can be either the subtraction of a constant (mean) or linear
+     * detrending (with intercept and slope)
+     *
+     * @param axis the direction (0 is rows, 1 is columns)
+     * @param type "constant" or "linear"
+     * @return new matrix with detrended values
+     */
     public Matrix detrend(int axis, String type) {
         ParameterChecker.checkAxis(axis);
         ParameterChecker.checkString(type, new String[]{"constant", "linear"});
@@ -394,14 +556,33 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
+    /**
+     * Forward fast fourier transform onto a particular axis
+     *
+     * @param axis the axis (0 is rows, 1 is columns)
+     * @return The new matrix with a fft applied to each row or column
+     */
     public Matrix fft(int axis) {
         return fft(axis, TransformType.FORWARD);
     }
 
+    /**
+     * Inverse fast fourier transform onto a particular axis
+     *
+     * @param axis the axis (0 is rows, 1 is columns)
+     * @return The new matrix with an ifft applied to each row or column
+     */
     public Matrix ifft(int axis) {
         return fft(axis, TransformType.INVERSE);
     }
 
+    /**
+     * Forward or Inverse fast fourier transform onto a particular axis
+     *
+     * @param axis      the axis (0 is rows, 1 is columns)
+     * @param direction TransformType.FORWARD or TransformType.INVERSE
+     * @return The new matrix with a fft or ifft applied to each row or column
+     */
     public Matrix fft(int axis, TransformType direction) {
         ParameterChecker.checkAxis(axis);
 
@@ -424,6 +605,13 @@ public class Matrix extends Array2DRowRealMatrix {
         return new Matrix(ft);
     }
 
+    /**
+     * fft on an array with complex values
+     *
+     * @param axis      the axis (0 is rows, 1 is columns)
+     * @param direction TransformType.FORWARD or TransformType.INVERSE
+     * @return The new matrix with a fft or ifft applied to each row or column
+     */
     public Complex[][] fftComplex(int axis, TransformType direction) {
         ParameterChecker.checkAxis(axis);
 
@@ -449,15 +637,23 @@ public class Matrix extends Array2DRowRealMatrix {
         return ft;
     }
 
+    /**
+     * Eigenvalue decomposition of the matrix
+     *
+     * @return Tuple with the eigenvectors and eigenvalues in descending order
+     */
     public Tuple<Matrix, RealVector> eig() {
         return eig("descending");
     }
 
+    /**
+     * Eigenvalue decomposition of the matrix.
+     *
+     * @param order of the eigenvalues
+     * @return Tuple with the eigenvectors and eigenvalues in a particular order
+     */
     public Tuple<Matrix, RealVector> eig(String order) {
         ParameterChecker.checkString(order, new String[]{"descending", "ascending"});
-
-        // FIXME is returning negative of python implementation
-        // FIXME slightly different from python implementation
         EigenDecomposition eig = new EigenDecomposition(this);
         RealMatrix oldVectors = new Array2DRowRealMatrix(eig.getV().getData());
         double[] oldValues = eig.getRealEigenvalues();
@@ -479,16 +675,34 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
+    /**
+     * Singular values decomposition of the matrix
+     *
+     * @return the left singular values (U), the scaling diagonal matrix (Sigma) and the right singular values (V^T).
+     */
     public Triple<Matrix, Matrix, Matrix> svd() {
         SingularValueDecomposition svd = new SingularValueDecomposition(this);
         return new Triple<Matrix, Matrix, Matrix>(new Matrix(svd.getU()), new Matrix(svd.getS()), new Matrix(svd
                 .getVT()));
     }
 
+    /**
+     * Spatial filtering of the matrix
+     *
+     * @param type "car" or "whiten"
+     * @return new matrix with spatially filtered values
+     */
     public Matrix spatialFilter(String type) {
         return spatialFilter(type, 1e-15);
     }
 
+    /**
+     * Spatial filtering of the matrix
+     *
+     * @param type        "car" or "whiten"
+     * @param whitenThres threshold for the whitening
+     * @return new matrix with spatially filtered values
+     */
     public Matrix spatialFilter(String type, double whitenThres) {
         ParameterChecker.checkString(type, new String[]{"car", "whiten"});
         ParameterChecker.checkNonNegative(whitenThres);
@@ -511,6 +725,13 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
+    /**
+     * Convolve the matrix with a function on a particular axis
+     *
+     * @param function The function to convolve with.
+     * @param axis     Direction of the convolution (0 is rows, 1 is columns)
+     * @return new matrix with values convolved with the function.
+     */
     public Matrix convolve(double[] function, int axis) {
         ParameterChecker.checkNonZero(function.length);
         ParameterChecker.checkAxis(axis);
@@ -527,6 +748,16 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
+    /**
+     * Removes outliers from the matrix based on the variance of mean.
+     *
+     * @param axis           direction to remove outliers in (0 is rows, 1 is columns)
+     * @param lowerThreshold scaling of the feature to get the lower boundary
+     * @param upperThreshold scaling of the feature to get the upper boundary
+     * @param maxIter        number of iteration
+     * @param feat           "var" or "mu"
+     * @return matrix with possible removed rows or columns because they are outliers.
+     */
     public Matrix removeOutliers(int axis, double lowerThreshold, double upperThreshold, int maxIter, String feat) {
         ParameterChecker.checkAxis(axis);
         ParameterChecker.checkNonZero(maxIter);
@@ -537,7 +768,7 @@ public class Matrix extends Array2DRowRealMatrix {
         if (maxIter > 1)
             m = m.removeOutliers(axis, lowerThreshold, upperThreshold, maxIter - 1, feat);
         if (m == null)
-            return m;
+            return null;
 
         Matrix feature;
         if (feat.equalsIgnoreCase("var")) {
@@ -585,6 +816,16 @@ public class Matrix extends Array2DRowRealMatrix {
         }
     }
 
+    /**
+     * Welch method on the matrix
+     *
+     * @param dim      direction to apply it on (0 is rows, 1 is columns)
+     * @param taper    window function
+     * @param start    start indexes
+     * @param width    width of the welch window
+     * @param detrendP if the resulting matrix should be detrended
+     * @return precise estimation of the power of the frequencies of the matrix.
+     */
     public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendP) {
         ParameterChecker.checkAxis(dim, false);
         ParameterChecker.checkPower(width, 2);

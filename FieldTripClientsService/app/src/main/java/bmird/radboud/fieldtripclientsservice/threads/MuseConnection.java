@@ -51,6 +51,10 @@ public class MuseConnection extends ThreadBase {
         return "MuseConnection";
     }
 
+    /**
+     * Initializes the connections to the buffer and muse. Processing and sending data is done with callbacks.
+     * mainloop stays alive to update the UI.
+     */
     @Override
     public void mainloop() {
         // Create listeners and pass reference to activity to them
@@ -62,22 +66,25 @@ public class MuseConnection extends ThreadBase {
         android.updateStatus("Address: " + address + ":" + String.valueOf(port));
         Log.i(TAG, "Buffer server: " + address + " : " + port);
 
-        client = new BufferClient();
+        // Connect to the muse headband
         connectionListener = new ConnectionListener();
         dataListener = new DataListener();
         Log.i("Muse Headband", "libmuse version=" + LibMuseVersion.SDK_VERSION);
-
         getMuse();
         connectToMuse();
 
-        run = true;
+        // connect to the buffer
+        client = new BufferClient();
         connectToBuffer();
         uploadHeaderToBuffer(channels, samplingFrequency, dataType);
 
+        // For showing purposes
         long startMs = Calendar.getInstance().getTimeInMillis();
         long elapsedMs = 0;
         nSamples = 0;
 
+        // Keep the thread alive while it waits for data and processes it. Once every 5 sec the progress is shown.
+        run = true;
         while (run) {
             long now = Calendar.getInstance().getTimeInMillis();
             if (startMs + elapsedMs > now + 5000) {
@@ -87,6 +94,9 @@ public class MuseConnection extends ThreadBase {
         }
     }
 
+    /**
+     * Get the muse headband that is first paired with the device
+     */
     private void getMuse() {
         while (muse == null) {
             Log.i(TAG, "Refreshing paired muses list");
@@ -96,6 +106,9 @@ public class MuseConnection extends ThreadBase {
         }
     }
 
+    /**
+     * Connect to the detected muse.
+     */
     private void connectToMuse() {
         ConnectionState state = muse.getConnectionState();
         if (state == ConnectionState.CONNECTED || state == ConnectionState.CONNECTING) {
@@ -116,7 +129,10 @@ public class MuseConnection extends ThreadBase {
         }
     }
 
-    private void disconectMuse() {
+    /**
+     * Disconnect from the connected muse
+     */
+    private void disconnectMuse() {
         if (muse != null) {
             /**
              * true flag will force libmuse to unregister all listeners,
@@ -131,6 +147,9 @@ public class MuseConnection extends ThreadBase {
         }
     }
 
+    /**
+     * Configure the data receiver and processor.
+     */
     private void configureLibrary() {
         muse.registerConnectionListener(connectionListener);
         muse.registerDataListener(dataListener, MuseDataPacketType.EEG);
@@ -138,6 +157,9 @@ public class MuseConnection extends ThreadBase {
         muse.enableDataTransmission(dataTransmission);
     }
 
+    /**
+     * Connect to the buffer for sending events and receiving data.
+     */
     private void connectToBuffer() {
         while (!client.isConnected()) {
             Log.i(TAG, "Connecting to " + address + ":" + port);
@@ -157,6 +179,13 @@ public class MuseConnection extends ThreadBase {
         }
     }
 
+    /**
+     * Upload the header information to the buffer.
+     *
+     * @param channels          The number of channels
+     * @param samplingFrequency The expected sampling frequency
+     * @param dataType          The datatype.
+     */
     private void uploadHeaderToBuffer(int channels, int samplingFrequency, int dataType) {
         Header hdr = new Header(channels, samplingFrequency, dataType);
         try {
@@ -168,6 +197,11 @@ public class MuseConnection extends ThreadBase {
         Log.i(TAG, hdr.toString());
     }
 
+    /**
+     * Not implemented yet
+     *
+     * @param arguments
+     */
     @Override
     public void validateArguments(Argument[] arguments) {
 
@@ -175,18 +209,22 @@ public class MuseConnection extends ThreadBase {
 
     @Override
     public void stop() {
-        disconectMuse();
-        if (client != null) try {
-            client.disconnect();
-        } catch (IOException e) {
-            Log.e(TAG, Log.getStackTraceString(e));
-        } finally {
-            client = null;
-        }
+        disconnectMuse();
+        if (client != null)
+            try {
+                client.disconnect();
+            } catch (IOException e) {
+                Log.e(TAG, Log.getStackTraceString(e));
+            } finally {
+                client = null;
+            }
 
         super.stop();
     }
 
+    /**
+     * Listens to the muse and when it connects gets information from it.
+     */
     class ConnectionListener extends MuseConnectionListener {
 
         @Override
@@ -218,12 +256,6 @@ public class MuseConnection extends ThreadBase {
                 case EEG:
                     updateEeg(p.getValues());
                     break;
-                case ACCELEROMETER:
-                    updateAccelerometer(p.getValues());
-                    break;
-                case ALPHA_RELATIVE:
-                    updateAlphaRelative(p.getValues());
-                    break;
                 default:
                     break;
             }
@@ -234,10 +266,6 @@ public class MuseConnection extends ThreadBase {
             if (p.getHeadbandOn() && p.getBlink()) {
                 Log.i("Artifacts", "blink");
             }
-        }
-
-        private void updateAccelerometer(final ArrayList<Double> data) {
-            Log.v(TAG, "Accelerometer: " + data.toString());
         }
 
         private void updateEeg(final ArrayList<Double> data) {
@@ -253,10 +281,5 @@ public class MuseConnection extends ThreadBase {
             }
             nSamples += 1;
         }
-
-        private void updateAlphaRelative(final ArrayList<Double> data) {
-            Log.v(TAG, "Alpha: " + data.toString());
-        }
     }
-
 }
