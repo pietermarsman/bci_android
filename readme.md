@@ -1,4 +1,4 @@
-# Prerequisit
+# Prerequisite
 - Android Studio or Intellij
 - Android Development Kit
 - Packages from Android SDK Manager:
