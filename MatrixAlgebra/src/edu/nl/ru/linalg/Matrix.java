@@ -390,6 +390,25 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     /**
+     * Element wise multiplication of the current matrix with another. Matrices should have same shape.
+     *
+     * @param b the other matrix
+     * @return new matrix were each element is the this_{ij}*b_{ij}
+     */
+    public Matrix divideElements(final Matrix b) {
+        ParameterChecker.checkEquals(this.getRowDimension(), b.getRowDimension());
+        ParameterChecker.checkEquals(this.getColumnDimension(), b.getColumnDimension());
+
+        RealMatrix c = this.copy();
+        c.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
+            public double visit(int row, int column, double value) {
+                return value / b.getEntry(row, column);
+            }
+        });
+        return new Matrix(c);
+    }
+
+    /**
      * Compute a univariate statistic over the matrix.
      *
      * @param axis direction of computation
