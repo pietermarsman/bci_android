@@ -1,6 +1,6 @@
-package edu.nl.ru.linalg;
+package edu.nl.ru.matrixalgebra.linalg;
 
-import edu.nl.ru.miscellaneous.*;
+import edu.nl.ru.matrixalgebra.miscellaneous.*;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;

@@ -1,7 +1,7 @@
-package edu.nl.ru.test;
+package edu.nl.ru.matrixalgebra.test;
 
-import edu.nl.ru.miscellaneous.Tuple;
-import edu.nl.ru.miscellaneous.Windows;
+import edu.nl.ru.matrixalgebra.miscellaneous.Tuple;
+import edu.nl.ru.matrixalgebra.miscellaneous.Windows;
 import junit.framework.TestCase;
 import org.junit.Assert;
 

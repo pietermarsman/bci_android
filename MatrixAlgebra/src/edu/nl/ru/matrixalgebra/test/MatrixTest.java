@@ -1,8 +1,8 @@
-package edu.nl.ru.test;
+package edu.nl.ru.matrixalgebra.test;
 
-import edu.nl.ru.linalg.Matrix;
-import edu.nl.ru.miscellaneous.Triple;
-import edu.nl.ru.miscellaneous.Tuple;
+import edu.nl.ru.matrixalgebra.linalg.Matrix;
+import edu.nl.ru.matrixalgebra.miscellaneous.Triple;
+import edu.nl.ru.matrixalgebra.miscellaneous.Tuple;
 import junit.framework.TestCase;
 import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.RealVector;

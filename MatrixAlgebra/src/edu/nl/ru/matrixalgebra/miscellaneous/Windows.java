@@ -1,4 +1,4 @@
-package edu.nl.ru.miscellaneous;
+package edu.nl.ru.matrixalgebra.miscellaneous;
 
 import org.apache.commons.math3.analysis.function.Gaussian;
 

@@ -1,4 +1,4 @@
-package edu.nl.ru.linalg;
+package edu.nl.ru.matrixalgebra.linalg;
 
 /**
  * Created by Pieter on 4-3-2015.

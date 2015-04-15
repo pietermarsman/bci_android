@@ -1,4 +1,4 @@
-package edu.nl.ru.miscellaneous;
+package edu.nl.ru.matrixalgebra.miscellaneous;
 
 /**
  * Created by Pieter on 11-2-2015.
