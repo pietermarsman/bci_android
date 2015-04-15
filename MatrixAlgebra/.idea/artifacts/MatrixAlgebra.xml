@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="MatrixAlgebra">
+    <output-path>$PROJECT_DIR$/out/artifacts/MatrixAlgebra</output-path>
+    <root id="archive" name="MatrixAlgebra.jar">
+      <element id="module-output" name="MatrixAlgebra" />
+      <element id="library" level="project" name="org.apache.commons:commons-math3:3.4" />
+      <element id="library" level="project" name="junit:junit:4.12" />
+    </root>
+  </artifact>
+</component>
