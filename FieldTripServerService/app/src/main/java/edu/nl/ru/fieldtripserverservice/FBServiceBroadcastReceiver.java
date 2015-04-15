@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripserverservice;
+package edu.nl.ru.fieldtripserverservice;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,12 +6,15 @@ import android.content.Intent;
 import android.util.Log;
 
 public class FBServiceBroadcastReceiver extends BroadcastReceiver {
+    
+    public static String TAG = FBServiceBroadcastReceiver.class.toString();
+    
     public FBServiceBroadcastReceiver() {
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i(C.TAG, "Got Flush request");
+        Log.i(TAG, "Got Flush request");
         Intent intent_for_bufferService = new Intent(C.FILTER);
         switch (intent.getIntExtra(C.MESSAGE_TYPE, -1)) {
             case C.REQUEST_PUT_HEADER:

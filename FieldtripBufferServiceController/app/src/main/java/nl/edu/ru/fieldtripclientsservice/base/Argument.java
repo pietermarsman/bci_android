@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripclientsservice.base;
+package nl.edu.ru.fieldtripclientsservice.base;
 
 import java.io.Serializable;
 

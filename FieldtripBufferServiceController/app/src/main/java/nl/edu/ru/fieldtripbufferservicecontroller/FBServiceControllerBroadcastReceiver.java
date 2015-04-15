@@ -1,15 +1,16 @@
-package bmird.radboud.fieldtripbufferservicecontroller;
+package nl.edu.ru.fieldtripbufferservicecontroller;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import bmird.radboud.fieldtripserverservice.monitor.BufferInfo;
+import nl.edu.ru.monitor.BufferInfo;
 
 
 public class FBServiceControllerBroadcastReceiver extends BroadcastReceiver {
 
+    public static String TAG = FBServiceControllerBroadcastReceiver.class.toString();
 
     public FBServiceControllerBroadcastReceiver() {
     }
@@ -26,7 +27,7 @@ public class FBServiceControllerBroadcastReceiver extends BroadcastReceiver {
                     intent_for_MainActivity.putExtra(C.IS_BUFFER_INFO, newBufferInfo);
                     BufferInfo bf = intent.getParcelableExtra(C.BUFFER_INFO);
                     intent_for_MainActivity.putExtra(C.BUFFER_INFO, intent.getParcelableExtra(C.BUFFER_INFO));
-                    //Log.i(C.TAG, "From BroadcastReceiver Sending intent with BufferInfo to MainActivity");
+                    //Log.i(TAG, "From BroadcastReceiver Sending intent with BufferInfo to MainActivity");
                     context.sendBroadcast(intent_for_MainActivity);
                 }
 
@@ -37,7 +38,7 @@ public class FBServiceControllerBroadcastReceiver extends BroadcastReceiver {
                     for (int k=0; k<numOfClients; ++k){
                         intent_for_MainActivity.putExtra(C.CLIENT_INFO+k, intent.getParcelableExtra(C.CLIENT_INFO+k));
                     }
-                    Log.i(C.TAG, "From BroadcastReceiver Sending client info with "+numOfClients+" clients to MainActivity");
+                    Log.i(TAG, "From BroadcastReceiver Sending client info with "+numOfClients+" clients to MainActivity");
                     context.sendBroadcast(intent_for_MainActivity);
                 }
 
@@ -50,7 +51,7 @@ public class FBServiceControllerBroadcastReceiver extends BroadcastReceiver {
                     for (int k = 0; k < nArgs; k++) {
                         intent_for_MainActivity.putExtra(C.THREAD_ARGUMENTS + k, intent.getSerializableExtra(C.THREAD_ARGUMENTS + k));
                     }
-                    //Log.i(C.TAG, "From BroadcastReceiver Sending intent with ThreadInfo to MainActivity");
+                    //Log.i(TAG, "From BroadcastReceiver Sending intent with ThreadInfo to MainActivity");
                     context.sendBroadcast(intent_for_MainActivity);
                 }
             }

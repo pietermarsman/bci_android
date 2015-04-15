@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripserverservice;
+package edu.nl.ru.fieldtripserverservice;
 
 import nl.fcdonders.fieldtrip.bufferserver.FieldtripBufferMonitor;
 
@@ -9,8 +9,8 @@ import nl.fcdonders.fieldtrip.bufferserver.FieldtripBufferMonitor;
  *
  */
 public final class C {
-	public static final String FILTER = "bmird.radboud.fieldtripserverservice.filter";
-    public static final String SEND_UPDATEINFO_TO_CONTROLLER_ACTION = "bmird.radboud.fieldtripbufferservicecontroller.action.UPDATEINFO";
+	public static final String FILTER = "edu.nl.ru.fieldtripserverservice.filter";
+    public static final String SEND_UPDATEINFO_TO_CONTROLLER_ACTION = "edu.nl.ru.fieldtripbufferservicecontroller.action.UPDATEINFO";
 
 	public static final String MESSAGE_TYPE = "a";
 
@@ -77,9 +77,7 @@ public final class C {
 	public static final int ERROR_CONNECTION = FieldtripBufferMonitor.ERROR_CONNECTION;
 	public static final int ERROR_VERSION = FieldtripBufferMonitor.ERROR_VERSION;
 
-	public static final String TAG = "fieldtripbuffer_server_service";
+	public static final String WAKELOCKTAG = "edu.nl.ru.fieldtripserverservice.wakelock";
 
-	public static final String WAKELOCKTAG = "bmird.radboud.fieldtripserverservice.wakelock";
-
-	public static final String WAKELOCKTAGWIFI = "bmird.radboud.fieldtripserverservice.wakelockwifi";
+	public static final String WAKELOCKTAGWIFI = "edu.nl.ru.fieldtripserverservice.wakelockwifi";
 }

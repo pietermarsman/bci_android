@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripbufferservicecontroller;
+package nl.edu.ru.fieldtripbufferservicecontroller;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -15,13 +15,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-import bmird.radboud.fieldtripserverservice.monitor.BufferInfo;
-import bmird.radboud.fieldtripserverservice.monitor.ClientInfo;
+import nl.edu.ru.monitor.BufferInfo;
+import nl.edu.ru.monitor.ClientInfo;
 
 /**
  * Created by georgedimitriadis on 08/02/15.
  */
 public class ServerController {
+    
+    public static String TAG = ServerController.class.toString();
 
     private String serverServicePackageName = C.SERVER_SERVICE_PACKAGE_NAME;
     private String serverServiceClassName = C.SERVER_SERVICE_CLASS_NAME;
@@ -126,7 +128,7 @@ public class ServerController {
 
 
     protected void initialUpdate() {
-        //Log.i(C.TAG, "Initially Updated Buffer Info.");
+        //Log.i(TAG, "Initially Updated Buffer Info.");
         address = buffer.address;
         timer = new Timer();
         timer.start();
@@ -135,7 +137,7 @@ public class ServerController {
     }
 
     protected void updateBufferInfo() {
-        //Log.i(C.TAG, "Updated Buffer Info.");
+        //Log.i(TAG, "Updated Buffer Info.");
         if (buffer.fSample != -1 && buffer.nChannels != -1) {
             dataType = buffer.dataType;
             nChannels = buffer.nChannels;
@@ -154,7 +156,7 @@ public class ServerController {
 
 
     protected void updateClients(final ClientInfo[] clientinfo) {
-        Log.i(C.TAG, "In UpdateClients: Client list size:" + Integer.toString(clientinfo.length));
+        Log.i(TAG, "In UpdateClients: Client list size:" + Integer.toString(clientinfo.length));
         for (final ClientInfo client : clientinfo) {
             if (clients.get(client.clientID) == null) {
                 clients.put(client.clientID, client);
@@ -170,7 +172,7 @@ public class ServerController {
                     }
                 }
             }
-            Log.i(C.TAG, "In UpdateClients: Updating Client list with client with ID = " + client.clientID);
+            Log.i(TAG, "In UpdateClients: Updating Client list with client with ID = " + client.clientID);
         }
     }
 
@@ -418,9 +420,9 @@ public class ServerController {
             intent.putExtra("nEvents", 1000);
         }
 
-        Log.i(C.TAG, "Attempting to start Buffer Service");
+        Log.i(TAG, "Attempting to start Buffer Service");
         ComponentName serviceName = context.startService(intent);
-        Log.i(C.TAG, "Managed to start service: "+ serviceName);
+        Log.i(TAG, "Managed to start service: "+ serviceName);
 
         String result = "Buffer Service was not found";
         if(serviceName!=null)
@@ -457,7 +459,7 @@ public class ServerController {
             timer.running = false;
             initalUpdateCalled = false;
         }
-        Log.i(C.TAG, "Trying to stop buffer service: "+ stopped);
+        Log.i(TAG, "Trying to stop buffer service: "+ stopped);
         return stopped;
     }
 

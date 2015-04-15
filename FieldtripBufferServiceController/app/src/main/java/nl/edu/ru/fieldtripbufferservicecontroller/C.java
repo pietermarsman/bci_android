@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripbufferservicecontroller;
+package nl.edu.ru.fieldtripbufferservicecontroller;
 
 
 /**
@@ -9,13 +9,13 @@ package bmird.radboud.fieldtripbufferservicecontroller;
  */
 
 public final class C {
-	public static final String FILTER_FROM_SERVER = "bmird.radboud.fieldtripbufferservicecontroller.serverfilter";
-    public static final String FILTER_FOR_CLIENTS = "bmird.radboud.fieldtripclientsservice.clientsfilter";
-    public static final String SEND_FLUSHBUFFER_REQUEST_TO_SERVICE = "bmird.radboud.fieldtripserverservice.action.FLUSH";
-    public static final String SERVER_SERVICE_PACKAGE_NAME = "bmird.radboud.fieldtripserverservice";
-    public static final String SERVER_SERVICE_CLASS_NAME = "bmird.radboud.fieldtripserverservice.FieldTripServerService";
-    public static final String CLIENTS_SERVICE_PACKAGE_NAME = "bmird.radboud.fieldtripclientsservice";
-    public static final String CLIENTS_SERVICE_CLASS_NAME = "bmird.radboud.fieldtripclientsservice.FieldTripClientsService";
+	public static final String FILTER_FROM_SERVER = "nl.edu.ru.fieldtripbufferservicecontroller.serverfilter";
+    public static final String FILTER_FOR_CLIENTS = "nl.edu.ru.fieldtripclientsservice.clientsfilter";
+    public static final String SEND_FLUSHBUFFER_REQUEST_TO_SERVICE = "nl.edu.ru.fieldtripserverservice.action.FLUSH";
+    public static final String SERVER_SERVICE_PACKAGE_NAME = "nl.edu.ru.fieldtripserverservice";
+    public static final String SERVER_SERVICE_CLASS_NAME = "nl.edu.ru.fieldtripserverservice.FieldTripServerService";
+    public static final String CLIENTS_SERVICE_PACKAGE_NAME = "nl.edu.ru.fieldtripclientsservice";
+    public static final String CLIENTS_SERVICE_CLASS_NAME = "nl.edu.ru.fieldtripclientsservice.FieldTripClientsService";
 
 	public static final String MESSAGE_TYPE = "a";
 
@@ -68,8 +68,6 @@ public final class C {
 	public static final int ERROR_PROTOCOL = 0;
 	public static final int ERROR_CONNECTION = 1;
 	public static final int ERROR_VERSION = 2;
-
-	public static final String TAG = "fieldtripbuffer_service_controller";
 
 	public static final String WAKELOCKTAG = "com.dcc.fieldtripbuffer.wakelock";
 

@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripbufferservicecontroller;
+package nl.edu.ru.fieldtripbufferservicecontroller;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,14 +9,14 @@ import android.util.Log;
 
 import com.unity3d.player.UnityPlayerActivity;
 
-import bmird.radboud.fieldtripclientsservice.ThreadInfo;
-import bmird.radboud.fieldtripclientsservice.base.Argument;
-import bmird.radboud.fieldtripserverservice.monitor.ClientInfo;
-
+import nl.edu.ru.fieldtripclientsservice.ThreadInfo;
+import nl.edu.ru.fieldtripclientsservice.base.Argument;
+import nl.edu.ru.monitor.ClientInfo;
 
 
 public class MainActivity extends UnityPlayerActivity {
-//public class MainActivity extends Activity{
+    
+    public static String TAG = MainActivity.class.toString();
 
     public ServerController serverController;
     public ClientsController clientsController;
@@ -54,17 +54,17 @@ public class MainActivity extends UnityPlayerActivity {
 
 
     private void updateServerController(Intent intent){
-        Log.i(C.TAG, "Got Intent from Broadcast");
+        Log.i(TAG, "Got Intent from Broadcast");
         if (intent.getBooleanExtra(C.IS_BUFFER_INFO, false)) {
-            //Log.i(C.TAG, "Received Buffer Info.");
+            //Log.i(TAG, "Received Buffer Info.");
             updateServerInfo(intent);
         }
         if (intent.getBooleanExtra(C.IS_CLIENT_INFO, false)) {
-            Log.i(C.TAG, "Received Client Info.");
+            Log.i(TAG, "Received Client Info.");
             updateClientInfoFromServer(intent);
         }
         if(intent.getBooleanExtra(C.IS_THREAD_INFO, false)){
-            //Log.i(C.TAG, "Received Thread Info");
+            //Log.i(TAG, "Received Thread Info");
             updateThreadsInfo(intent);
         }
     }
@@ -75,16 +75,16 @@ public class MainActivity extends UnityPlayerActivity {
             serverController.initialUpdate();
         }
         serverController.updateBufferInfo();
-        //Log.i(C.TAG, "New buffer info");
+        //Log.i(TAG, "New buffer info");
     }
 
     private void updateClientInfoFromServer(Intent intent){
         int numOfClients = intent.getIntExtra(C.CLIENT_N_INFOS, 0);
-        Log.i(C.TAG, "In UpdateClientInfoFromServer: Number of clientInfos = "+numOfClients);
+        Log.i(TAG, "In UpdateClientInfoFromServer: Number of clientInfos = "+numOfClients);
         ClientInfo[] clientInfo = new ClientInfo[numOfClients];
         for (int k=0; k<numOfClients; ++k){
             clientInfo[k] = intent.getParcelableExtra(C.CLIENT_INFO+k);
-            Log.i(C.TAG, "In UpdateClientInfoFromServer: Client update with Client ID = "+clientInfo[k].clientID);
+            Log.i(TAG, "In UpdateClientInfoFromServer: Client update with Client ID = "+clientInfo[k].clientID);
         }
         serverController.updateClients(clientInfo);
 
@@ -105,7 +105,7 @@ public class MainActivity extends UnityPlayerActivity {
     public String startServer(){
         String serverName = "";
         if (!serverController.isBufferServerServiceRunning()) {
-            Log.i(C.TAG, "Starting Buffer Service");
+            Log.i(TAG, "Starting Buffer Service");
             serverName = serverController.startServerService();
         }
         return serverName;
@@ -114,7 +114,7 @@ public class MainActivity extends UnityPlayerActivity {
     public String startClients(){
         String clientsName = "";
         if (!clientsController.isClientsServiceRunning()) {
-            Log.i(C.TAG, "Starting Clients Service");
+            Log.i(TAG, "Starting Clients Service");
             clientsName = clientsController.startClientsService();
         }
         return clientsName;
@@ -123,7 +123,7 @@ public class MainActivity extends UnityPlayerActivity {
     public boolean stopServer(){
         boolean result = false;
         if (serverController.isBufferServerServiceRunning()) {
-            Log.i(C.TAG, "Stopping Buffer Service");
+            Log.i(TAG, "Stopping Buffer Service");
             result = serverController.stopServerService();
         }
         return result;
@@ -132,7 +132,7 @@ public class MainActivity extends UnityPlayerActivity {
     public boolean stopClients(){
         boolean result = false;
         if (clientsController.isClientsServiceRunning()) {
-            Log.i(C.TAG, "Stopping Clients Service");
+            Log.i(TAG, "Stopping Clients Service");
             result = clientsController.stopClientsService();
         }
         return result;

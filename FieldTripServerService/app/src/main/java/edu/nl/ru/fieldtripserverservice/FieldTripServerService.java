@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripserverservice;
+package edu.nl.ru.fieldtripserverservice;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -17,10 +17,12 @@ import android.util.Log;
 
 import java.util.Locale;
 
-import bmird.radboud.fieldtripserverservice.monitor.BufferMonitor;
+import edu.nl.ru.fieldtripserverservice.monitor.BufferMonitor;
 import nl.fcdonders.fieldtrip.bufferserver.BufferServer;
 
 public class FieldTripServerService extends Service {
+	
+	public static String TAG = FieldTripServerService.class.toString();
 
 	private BufferServer buffer;
 	private BufferMonitor monitor;
@@ -31,7 +33,7 @@ public class FieldTripServerService extends Service {
     BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, Intent intent) {
-            Log.i(C.TAG, "Dealing with Flush request");
+            Log.i(TAG, "Dealing with Flush request");
             switch (intent.getIntExtra(C.MESSAGE_TYPE, -1)) {
                 case C.REQUEST_PUT_HEADER:
                     buffer.putHeader(0, 0, 0);
@@ -60,7 +62,7 @@ public class FieldTripServerService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		Log.i(C.TAG, "Stopping Buffer Service.");
+		Log.i(TAG, "Stopping Buffer Service.");
         this.unregisterReceiver(mMessageReceiver);
 		if (buffer != null) {
 			buffer.stopBuffer();
@@ -78,7 +80,7 @@ public class FieldTripServerService extends Service {
 
 	@Override
 	public int onStartCommand(final Intent intent, final int flags, final int startId) {
-		Log.i(C.TAG, "Buffer Service Running");
+		Log.i(TAG, "Buffer Service Running");
 		// If no buffer is running.
 		if (buffer == null) {
 
@@ -123,18 +125,18 @@ public class FieldTripServerService extends Service {
 			buffer.addMonitor(monitor);
 
 			// Start the buffer and Monitor
-			buffer.start(); Log.i(C.TAG, "1");
+			buffer.start(); Log.i(TAG, "1");
 			monitor.start();
-			Log.i(C.TAG, "Buffer thread started.");
+			Log.i(TAG, "Buffer thread started.");
 
 			// Turn this service into a foreground service
 			startForeground(1, mBuilder.build());
-			Log.i(C.TAG, "Fieldtrip Buffer Service moved to foreground.");
+			Log.i(TAG, "Fieldtrip Buffer Service moved to foreground.");
 
 
             if(buffer !=null) {
                 this.registerReceiver(mMessageReceiver, intentFilter);
-                Log.i(C.TAG, "Registered receiver with buffer:"+buffer.getName());
+                Log.i(TAG, "Registered receiver with buffer:"+buffer.getName());
             }
 
 

@@ -1,9 +1,9 @@
-package bmird.radboud.fieldtripserverservice.monitor;
+package edu.nl.ru.fieldtripserverservice.monitor;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import bmird.radboud.fieldtripserverservice.C;
+import edu.nl.ru.fieldtripserverservice.C;
 
 public class BufferInfo implements Parcelable {
     private static final long serialVersionUID = -5926084016803995100L;

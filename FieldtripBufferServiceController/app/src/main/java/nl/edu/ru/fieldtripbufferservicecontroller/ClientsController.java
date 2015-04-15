@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripbufferservicecontroller;
+package nl.edu.ru.fieldtripbufferservicecontroller;
 
 import android.app.ActivityManager;
 import android.content.ComponentName;
@@ -12,14 +12,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import bmird.radboud.fieldtripclientsservice.ThreadInfo;
-import bmird.radboud.fieldtripclientsservice.base.Argument;
+import nl.edu.ru.fieldtripclientsservice.ThreadInfo;
+import nl.edu.ru.fieldtripclientsservice.base.Argument;
 
 /**
  * Created by georgedimitriadis on 08/02/15.
  */
 public class ClientsController {
 
+    public static String TAG = ClientsController.class.toString();
+    
     public final static int TYPE_INTEGER_SIGNED = 0;
     public final static int TYPE_DOUBLE_SIGNED = 1;
     public final static int TYPE_BOOLEAN = 2;
@@ -79,11 +81,11 @@ public class ClientsController {
             allArguments.put(threadInfo.threadID, arguments);
             threadIDs.add(threadInfo.threadID);
         }
-        Log.i(C.TAG, "Updated a Thread with:");
-        Log.i(C.TAG, ((ThreadInfo)threadInfos.values().toArray()[threadInfos.size()-1]).title);
-        Log.i(C.TAG, "and Number of Arguments = "+((Argument[])allArguments.values().toArray()[allArguments.size()-1]).length);
-        Log.i(C.TAG, "Size of threadInfos = "+threadInfos.size());
-        Log.i(C.TAG, "Size of threadIDs = "+threadIDs.size());
+        Log.i(TAG, "Updated a Thread with:");
+        Log.i(TAG, ((ThreadInfo)threadInfos.values().toArray()[threadInfos.size()-1]).title);
+        Log.i(TAG, "and Number of Arguments = "+((Argument[])allArguments.values().toArray()[allArguments.size()-1]).length);
+        Log.i(TAG, "Size of threadInfos = "+threadInfos.size());
+        Log.i(TAG, "Size of threadIDs = "+threadIDs.size());
     }
 
 
@@ -110,9 +112,9 @@ public class ClientsController {
         threadIDs = new ArrayList<Integer>();
 
         // Start the client.
-        Log.i(C.TAG, "Attempting to start Clients Service");
+        Log.i(TAG, "Attempting to start Clients Service");
         ComponentName serviceName = context.startService(intent);
-        Log.i(C.TAG, "Managed to start service: "+ serviceName);
+        Log.i(TAG, "Managed to start service: "+ serviceName);
 
         String result = "Clients Service was not found";
         if(serviceName!=null)
@@ -125,7 +127,7 @@ public class ClientsController {
         threadInfos.clear();
         allArguments.clear();
         boolean stopped = context.stopService(intent);
-        Log.i(C.TAG, "Trying to stop clients service: "+ stopped);
+        Log.i(TAG, "Trying to stop clients service: "+ stopped);
         return stopped;
     }
 
@@ -137,7 +139,7 @@ public class ClientsController {
         int[] result = new int[threadIDs.size()];
         for(int i=0;i< threadIDs.size(); ++i){
             result[i]=threadIDs.get(i);
-            Log.i(C.TAG, "id: "+result[i]);
+            Log.i(TAG, "id: "+result[i]);
         }
         return result;
     }
@@ -159,7 +161,7 @@ public class ClientsController {
         Intent intentStart = new Intent(C.FILTER_FOR_CLIENTS);
         intentStart.putExtra(C.MESSAGE_TYPE, C.THREAD_START);
         intentStart.putExtra(C.THREAD_ID, threadID);
-        Log.i(C.TAG, "Sending Thread Start with ID: "+threadID);
+        Log.i(TAG, "Sending Thread Start with ID: "+threadID);
         context.sendOrderedBroadcast(intentStart,null);
     }
 
@@ -171,7 +173,7 @@ public class ClientsController {
         Intent intentStart = new Intent(C.FILTER_FOR_CLIENTS);
         intentStart.putExtra(C.MESSAGE_TYPE, C.THREAD_STOP);
         intentStart.putExtra(C.THREAD_ID, threadID);
-        Log.i(C.TAG, "Sending Thread Stop with ID: "+threadID);
+        Log.i(TAG, "Sending Thread Stop with ID: "+threadID);
         context.sendOrderedBroadcast(intentStart,null);
     }
 

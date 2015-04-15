@@ -1,9 +1,9 @@
-package bmird.radboud.fieldtripserverservice.monitor;
+package nl.edu.ru.monitor;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import bmird.radboud.fieldtripbufferservicecontroller.C;
+import nl.edu.ru.fieldtripbufferservicecontroller.C;
 
 public class BufferInfo implements Parcelable {
 

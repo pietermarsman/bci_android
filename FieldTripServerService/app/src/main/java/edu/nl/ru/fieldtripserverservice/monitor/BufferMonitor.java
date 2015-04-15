@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripserverservice.monitor;
+package edu.nl.ru.fieldtripserverservice.monitor;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,16 +8,18 @@ import android.util.SparseArray;
 
 import java.util.ArrayList;
 
-import bmird.radboud.fieldtripserverservice.C;
+import edu.nl.ru.fieldtripserverservice.C;
 import nl.fcdonders.fieldtrip.bufferserver.FieldtripBufferMonitor;
 
 public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
+	
+	public static String TAG = BufferMonitor.class.toString();
 
 	private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(final Context context, final Intent intent) {
 			if (intent.getIntExtra(C.MESSAGE_TYPE, -1) == C.UPDATE_REQUEST) {
-				Log.i(C.TAG, "Received update request.");
+				Log.i(TAG, "Received update request.");
 				sendAllInfo();
 			}
 		}
@@ -35,7 +37,7 @@ public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
 		setName("Fieldtrip Buffer Monitor");
 		info = new BufferInfo(adress, startTime);
         change = true;
-		Log.i(C.TAG, "Created Monitor.");
+		Log.i(TAG, "Created Monitor.");
 	}
 
 	@Override
@@ -165,7 +167,7 @@ public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
 		if (clientID != -1) {
 			final ClientInfo client = new ClientInfo(adress, clientID, time);
 			clients.put(clientID, client);
-            Log.i(C.TAG, "Added Client with id = "+clientID);
+            Log.i(TAG, "Added Client with id = "+clientID);
 			change = true;
 		}
 	}
@@ -261,7 +263,7 @@ public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
 
 
     private void sendAllInfo(){
-        Log.i(C.TAG, "Sending All Buffer Info to Controller");
+        Log.i(TAG, "Sending All Buffer Info to Controller");
         Intent intent = new Intent(C.SEND_UPDATEINFO_TO_CONTROLLER_ACTION);
         intent.putExtra(C.MESSAGE_TYPE, C.UPDATE);
         intent.putExtra(C.IS_BUFFER_INFO, true);
@@ -280,7 +282,7 @@ public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
         intent = generateClientsInfoIntent(intent);
 
         if(intent.getBooleanExtra(C.IS_BUFFER_INFO, false) || intent.getBooleanExtra(C.IS_CLIENT_INFO, false)){
-            Log.i(C.TAG, "Sending Update to Controller");
+            Log.i(TAG, "Sending Update to Controller");
             context.sendOrderedBroadcast(intent,null);
         }
 
@@ -301,7 +303,7 @@ public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
             for (int k=0; k<clientInfo.size(); ++k){
                 intent.putExtra(C.CLIENT_INFO+k, clientInfo.get(k));
             }
-            Log.i(C.TAG, "Including "+ clientInfo.size()+" Clients Info in update");
+            Log.i(TAG, "Including "+ clientInfo.size()+" Clients Info in update");
         }
 
         return intent;
@@ -309,7 +311,7 @@ public class BufferMonitor extends Thread implements FieldtripBufferMonitor {
 
 	public void stopMonitoring() {
 		run = false;
-		Log.i(C.TAG, "BufferMonitor stopped");
+		Log.i(TAG, "BufferMonitor stopped");
 	}
 
 }

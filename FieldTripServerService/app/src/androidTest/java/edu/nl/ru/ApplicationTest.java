@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripserverservice;
+package edu.nl.ru;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
