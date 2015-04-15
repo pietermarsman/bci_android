@@ -390,10 +390,10 @@ public class Matrix extends Array2DRowRealMatrix {
     }
 
     /**
-     * Element wise multiplication of the current matrix with another. Matrices should have same shape.
+     * Element wise division of the current matrix with another. Matrices should have same shape.
      *
      * @param b the other matrix
-     * @return new matrix were each element is the this_{ij}*b_{ij}
+     * @return new matrix were each element is the this_{ij}/b_{ij}
      */
     public Matrix divideElements(final Matrix b) {
         ParameterChecker.checkEquals(this.getRowDimension(), b.getRowDimension());
