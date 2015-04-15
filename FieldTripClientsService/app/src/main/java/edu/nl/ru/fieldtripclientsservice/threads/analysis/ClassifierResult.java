@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripclientsservice.threads.analysis;
+package edu.nl.ru.fieldtripclientsservice.threads.analysis;
 
 import edu.nl.ru.linalg.Matrix;
 
@@ -18,7 +18,7 @@ public class ClassifierResult {
         this.X = X;
     }
 
-    public ClassifierResult(bmird.radboud.fieldtripclientsservice.threads.analysis.ClassifierResult classifierResult) {
+    public ClassifierResult(edu.nl.ru.fieldtripclientsservice.threads.analysis.ClassifierResult classifierResult) {
         this.f = classifierResult.f;
         this.fraw = classifierResult.fraw;
         this.p = classifierResult.p;

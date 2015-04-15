@@ -1,12 +1,12 @@
-package bmird.radboud.fieldtripclientsservice.threads;
+package edu.nl.ru.fieldtripclientsservice.threads;
 
 import android.content.Context;
 import android.util.Log;
-import bmird.radboud.fieldtripclientsservice.base.AndroidHandle;
-import bmird.radboud.fieldtripclientsservice.base.Argument;
-import bmird.radboud.fieldtripclientsservice.base.ThreadBase;
-import bmird.radboud.fieldtripclientsservice.threads.analysis.Classifier;
-import bmird.radboud.fieldtripclientsservice.threads.analysis.ClassifierResult;
+import edu.nl.ru.fieldtripclientsservice.base.AndroidHandle;
+import edu.nl.ru.fieldtripclientsservice.base.Argument;
+import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
+import edu.nl.ru.fieldtripclientsservice.threads.analysis.Classifier;
+import edu.nl.ru.fieldtripclientsservice.threads.analysis.ClassifierResult;
 import edu.nl.ru.linalg.Matrix;
 import edu.nl.ru.linalg.WelchOutputType;
 import edu.nl.ru.miscellaneous.ArrayFunctions;

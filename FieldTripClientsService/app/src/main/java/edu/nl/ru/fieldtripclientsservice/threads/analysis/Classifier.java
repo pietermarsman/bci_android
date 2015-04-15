@@ -1,6 +1,5 @@
-package bmird.radboud.fieldtripclientsservice.threads.analysis;
+package edu.nl.ru.fieldtripclientsservice.threads.analysis;
 
-import android.os.Build;
 import android.util.Log;
 import edu.nl.ru.linalg.Matrix;
 import edu.nl.ru.linalg.WelchOutputType;
@@ -83,7 +82,7 @@ public class Classifier {
         Log.d(getClass().toString(), "Finished initializing");
     }
 
-    public bmird.radboud.fieldtripclientsservice.threads.analysis.ClassifierResult apply(Matrix data) {
+    public edu.nl.ru.fieldtripclientsservice.threads.analysis.ClassifierResult apply(Matrix data) {
         Log.v(getClass().toString(), "Applying classifier on data with shape " + data.shapeString());
         Log.v(getClass().toString(), "With windows size " + windowFn.length);
 

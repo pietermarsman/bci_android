@@ -1,10 +1,10 @@
-package bmird.radboud.fieldtripclientsservice.base;
+package edu.nl.ru.fieldtripclientsservice.base;
 
 import android.util.Log;
 
 import java.io.IOException;
 
-import bmird.radboud.fieldtripclientsservice.C;
+import edu.nl.ru.fieldtripclientsservice.C;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClient;
 import nl.fcdonders.fieldtrip.bufferclient.Header;
 

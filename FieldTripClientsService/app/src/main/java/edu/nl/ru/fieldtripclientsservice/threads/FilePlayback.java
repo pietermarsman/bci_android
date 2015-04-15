@@ -1,9 +1,9 @@
-package bmird.radboud.fieldtripclientsservice.threads;
+package edu.nl.ru.fieldtripclientsservice.threads;
 
 import android.util.Log;
-import bmird.radboud.fieldtripclientsservice.C;
-import bmird.radboud.fieldtripclientsservice.base.Argument;
-import bmird.radboud.fieldtripclientsservice.base.ThreadBase;
+import edu.nl.ru.fieldtripclientsservice.C;
+import edu.nl.ru.fieldtripclientsservice.base.Argument;
+import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClient;
 import nl.fcdonders.fieldtrip.bufferclient.BufferEvent;
 import nl.fcdonders.fieldtrip.bufferclient.DataType;

@@ -1,8 +1,8 @@
-package bmird.radboud.fieldtripclientsservice.threads;
+package edu.nl.ru.fieldtripclientsservice.threads;
 
 import android.util.Log;
-import bmird.radboud.fieldtripclientsservice.base.Argument;
-import bmird.radboud.fieldtripclientsservice.base.ThreadBase;
+import edu.nl.ru.fieldtripclientsservice.base.Argument;
+import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
 import com.interaxon.libmuse.*;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClient;
 import nl.fcdonders.fieldtrip.bufferclient.DataType;

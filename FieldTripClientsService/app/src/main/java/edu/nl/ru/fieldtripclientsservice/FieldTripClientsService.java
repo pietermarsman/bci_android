@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripclientsservice;
+package edu.nl.ru.fieldtripclientsservice;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -14,10 +14,10 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
-import bmird.radboud.fieldtripclientsservice.base.AndroidHandle;
-import bmird.radboud.fieldtripclientsservice.base.Argument;
-import bmird.radboud.fieldtripclientsservice.base.ThreadBase;
-import bmird.radboud.fieldtripclientsservice.threads.ThreadList;
+import edu.nl.ru.fieldtripclientsservice.base.AndroidHandle;
+import edu.nl.ru.fieldtripclientsservice.base.Argument;
+import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
+import edu.nl.ru.fieldtripclientsservice.threads.ThreadList;
 
 import java.io.*;
 

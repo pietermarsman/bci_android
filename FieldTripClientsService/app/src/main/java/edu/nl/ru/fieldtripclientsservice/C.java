@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripclientsservice;
+package edu.nl.ru.fieldtripclientsservice;
 
 /**
  * Class containing all the constants of this project.
@@ -7,8 +7,8 @@ package bmird.radboud.fieldtripclientsservice;
  *
  */
 public final class C {
-	public static final String FILTER_FOR_CLIENTS = "bmird.radboud.fieldtripclientsservice.clientsfilter";
-    public static final String SEND_UPDATEINFO_TO_CONTROLLER_ACTION = "bmird.radboud.fieldtripbufferservicecontroller.action.UPDATEINFO";
+	public static final String FILTER_FOR_CLIENTS = "edu.nl.ru.fieldtripclientsservice.clientsfilter";
+    public static final String SEND_UPDATEINFO_TO_CONTROLLER_ACTION = "edu.nl.ru.fieldtripbufferservicecontroller.action.UPDATEINFO";
 
 	public static final String MESSAGE_TYPE = "a";
 	public static final String THREAD_INDEX = "t_index";
@@ -29,8 +29,8 @@ public final class C {
 
 	public static final String TAG = "fieldtripthreads";
 
-	public static final String WAKELOCKTAG = "bmird.radboud.fieldtripclientsservice.wakelock";
+	public static final String WAKELOCKTAG = "edu.nl.ru.fieldtripclientsservice.wakelock";
 
-	public static final String WAKELOCKTAGWIFI = "bmird.radboud.fieldtripclientsservice.wakelockwifi";
+	public static final String WAKELOCKTAGWIFI = "edu.nl.ru.fieldtripclientsservice.wakelockwifi";
 
 }

@@ -1,4 +1,4 @@
-package bmird.radboud.fieldtripclientsservice;
+package edu.nl.ru.fieldtripclientsservice;
 
 import android.os.Parcel;
 import android.os.Parcelable;
