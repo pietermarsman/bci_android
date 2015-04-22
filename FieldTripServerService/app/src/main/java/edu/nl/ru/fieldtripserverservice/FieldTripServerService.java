@@ -9,6 +9,7 @@ import android.content.res.Resources;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
@@ -17,6 +18,8 @@ import android.util.Log;
 import edu.nl.ru.fieldtripserverservice.monitor.BufferMonitor;
 import nl.fcdonders.fieldtrip.bufferserver.BufferServer;
 
+import java.io.File;
+import java.util.Calendar;
 import java.util.Locale;
 
 public class FieldTripServerService extends Service {
@@ -113,10 +116,19 @@ public class FieldTripServerService extends Service {
                     .setContentTitle(res.getString(R.string.notification_title))
                     .setContentText(notification_text);
 
-
             // Create a buffer and start it.
-            buffer = new BufferServer(port, intent.getIntExtra("nSamples", 100),
-                    intent.getIntExtra("nEvents", 100));
+            if (isExternalStorageWritable()) {
+                Log.i(TAG, "External storage is writable");
+                long time = Calendar.getInstance().getTimeInMillis();
+                File file = getStorageDir("buffer_dump_" + String.valueOf(time));
+                buffer = new BufferServer(port, intent.getIntExtra("nSamples", 100),
+                        intent.getIntExtra("nEvents", 100), file);
+            } else {
+                Log.i(TAG, "External storage is sadly not writable");
+                Log.w(TAG, "Storage is not writable. I am not saving the data.");
+                buffer = new BufferServer(port, intent.getIntExtra("nSamples", 100),
+                        intent.getIntExtra("nEvents", 100));
+            }
             monitor = new BufferMonitor(this, ip + ":" + port,
                     System.currentTimeMillis());
             buffer.addMonitor(monitor);
@@ -140,5 +152,20 @@ public class FieldTripServerService extends Service {
 
         }
         return START_NOT_STICKY;
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
+    }
+
+    public File getStorageDir(String folderName) {
+        File file = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS), folderName);
+        if (!file.mkdirs()) {
+            Log.w(TAG, "Directory not created");
+        }
+        return file;
     }
 }
