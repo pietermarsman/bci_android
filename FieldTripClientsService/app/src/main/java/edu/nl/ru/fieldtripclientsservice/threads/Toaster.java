@@ -25,7 +25,7 @@ public class Toaster extends ThreadBase {
          * Declares a string argument, presented as simple text field. This one
          * is gong to be parsed in validateArguments.
          */
-        arguments[0] = new Argument("Buffer Adress", "localhost:1972");
+        arguments[0] = new Argument("Buffer Address", "localhost:1972");
 
         /**
          * Declares another string argument.
@@ -90,7 +90,7 @@ public class Toaster extends ThreadBase {
          * instance of this class.
          */
         final String[] split = arguments[0].getString().split(":");
-        String adress = split[0];
+        String address = split[0];
         int port = Integer.parseInt(split[1]);
         String eventType = arguments[1].getString();
         boolean longMessage = arguments[2].getSelected() == 1;
@@ -105,9 +105,9 @@ public class Toaster extends ThreadBase {
              * connect() is a convenience function defined in ThreadBase. It
              * connects to the buffer if able and waits for the header. Returns
              * false if the buffer could not be reached at the specified
-             * adress/port.
+             * address/port.
              */
-            if (!connect(client, adress, port)) {
+            if (!connect(client, address, port)) {
                 android.updateStatus("Could not connect to buffer.");
                 run = false;
                 return;
@@ -170,7 +170,7 @@ public class Toaster extends ThreadBase {
 
                             /**
                              * The small feedback popups that are sometimes
-                             * shown at the botter/center of the screen on
+                             * shown at the bottom/center of the screen on
                              * android devices are called toast. Calling the
                              * toast() or toastLong() methods will create such a
                              * popup.
@@ -203,7 +203,7 @@ public class Toaster extends ThreadBase {
 
     /**
      * Called when the thread needs to stop. (When the stop threads button is
-     * pressed in the app.) Is overriden so the buffer connection can be closed
+     * pressed in the app.) Is overridden so the buffer connection can be closed
      * neatly.
      */
     @Override
@@ -226,14 +226,14 @@ public class Toaster extends ThreadBase {
      */
     @Override
     public void validateArguments(final Argument[] arguments) {
-        final String adress = arguments[0].getString();
+        final String address = arguments[0].getString();
 
         try {
-            final String[] split = adress.split(":");
+            final String[] split = address.split(":");
             try {
                 Integer.parseInt(split[1]);
             } catch (final NumberFormatException e) {
-                arguments[0].invalidate("Wrong adress format.");
+                arguments[0].invalidate("Wrong address format.");
             }
 
         } catch (final ArrayIndexOutOfBoundsException e) {

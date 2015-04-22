@@ -1,7 +1,6 @@
 package edu.nl.ru.fieldtripclientsservice.threads;
 
 import android.util.Log;
-import edu.nl.ru.fieldtripclientsservice.C;
 import edu.nl.ru.fieldtripclientsservice.base.Argument;
 import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClient;
@@ -16,6 +15,9 @@ import java.nio.ByteOrder;
 
 
 public class FilePlayback extends ThreadBase {
+
+    public static final String TAG = FilePlayback.class.toString();
+
     private final BufferClient client = new BufferClient();
     private int VERB = 1; // global verbosity level
     private int BUFFERSIZE = 65500;
@@ -26,7 +28,6 @@ public class FilePlayback extends ThreadBase {
     private int port;
     private double speedup;
     private int buffsamp;
-    ;
 
     @Override
     public Argument[] getArguments() {
@@ -66,7 +67,7 @@ public class FilePlayback extends ThreadBase {
 
     @Override
     public void mainloop() {
-        Log.i(C.TAG, "Main loop of File Playback called");
+        Log.i(TAG, "Main loop of File Playback called");
         final String[] split = arguments[0].getString().split(":");
         address = split[0];
         port = Integer.parseInt(split[1]);
@@ -76,9 +77,9 @@ public class FilePlayback extends ThreadBase {
 
         // print the current settings
         android.updateStatus("Buffer server: " + address + " : " + port);
-        Log.i(C.TAG, "Buffer server: " + address + " : " + port);
-        Log.i(C.TAG, "speedup : " + speedup);
-        Log.i(C.TAG, "buffSamp : " + buffsamp);
+        Log.i(TAG, "Buffer server: " + address + " : " + port);
+        Log.i(TAG, "speedup : " + speedup);
+        Log.i(TAG, "buffSamp : " + buffsamp);
 
         // Open the header/events/samples files
         initFiles();
@@ -91,6 +92,7 @@ public class FilePlayback extends ThreadBase {
                 // FIXME causes android.os.NetworkOnMainThreadException
                 client.connect(address, port);
             } catch (IOException ex) {
+                Log.e(TAG, "Could not connect to the buffer. Maybe the address or port is wrong?");
             }
             if (!client.isConnected()) {
                 android.updateStatus("Couldn't connect. Waiting");
@@ -164,7 +166,8 @@ public class FilePlayback extends ThreadBase {
             // increment the cursor position
             if (VERB > 0 && elapsed_ms > print_ms + 500) {
                 print_ms = elapsed_ms;
-                android.updateStatus(nblk + " " + nsamp + " " + nevent + " " + elapsed_ms / 1000 + " (blk,samp,event,sec)\r");
+                android.updateStatus(nblk + " " + nsamp + " " + nevent + " " + elapsed_ms / 1000 + " (blk,samp,event," +
+                        "sec)\r");
             }
 
 

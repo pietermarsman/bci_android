@@ -19,175 +19,160 @@ import java.util.List;
  */
 public class Classifier {
 
+    public static final String TAG = Classifier.class.toString();
 
     private final double[] windowFn;
-    private final Double[] startMs;
     private final Double[] spatialFilter;
-    private final List<Matrix> Ws;
+    private final List<Matrix> classifierSlope;
     private final Matrix spectrumMx;
-    private final RealVector b;
+    private final RealVector classifierIntercept;
     private final String[] spectrumDescription;
     private final String type;
     private final WelchOutputType welchAveType;
     private final Boolean detrend;
     private final Double badChannelThreshold;
-    private final Integer[] timeIdx;
-    private final Integer[] freqIdx;
-    private final Integer[] isBad;
+    private final Integer[] windowTimeIdx;
+    private final Integer[] windowFrequencyIdx;
+    private final Integer[] thresholdIsBad;
     private final Integer[] outSize;
     private final Integer dimension;
     private final Integer windowLength;
     private final Double samplingFrequency;
     private final Windows.WindowType windowType;
+    private int[] welchStartMs;
 
-    public Classifier(List<Matrix> W, RealVector b, Boolean detrend, Double badChannelThreshold, Windows.WindowType windowType, WelchOutputType welchAveType, Integer[] timeIdx, Integer[] freqIdx, Integer dimension, Double[] spatialFilter, Matrix spMx, Integer windowLength, Double samplingFrequency, Double[] startMs, String[] spectrumDescription, Integer[] isBad) {
-
+    public Classifier(List<Matrix> classifierSlope, RealVector classifierIntercept, Boolean detrend, Double
+            badChannelThreshold, Windows.WindowType windowType, WelchOutputType welchAveType, Integer[]
+            windowTimeIdx, Integer[] windowFrequencyIdx, Integer dimension, Double[] spatialFilter, Matrix
+            spectrumMx, Integer windowLength, Double samplingFrequency, Integer[] welchStartMs, String[]
+            spectrumDescription, Integer[] thresholdIsBad) {
         ParameterChecker.checkString(welchAveType.toString(), new String[]{"AMPLITUDE", "power", "db"});
+
+        // todo immediately check if the right combination of parameters is given
 
         this.type = "ERsP";
         this.detrend = detrend;
-        this.welchAveType = welchAveType;
         this.dimension = dimension;
-        this.spectrumMx = spMx;
+        this.spectrumMx = spectrumMx;
         this.spectrumDescription = spectrumDescription;
-        this.isBad = isBad;
-
-        // Classifier
-        this.Ws = W;
-        this.b = b;
-
-        // Thresholds
+        this.thresholdIsBad = thresholdIsBad;
+        this.classifierSlope = classifierSlope;
+        this.classifierIntercept = classifierIntercept;
         this.badChannelThreshold = badChannelThreshold;
-
-        // Data acquisition properties
         this.samplingFrequency = samplingFrequency;
-
-        // Additional parameters
-        this.windowLength = windowLength;
-
-        // Spatial filter
         this.spatialFilter = spatialFilter;
-
-        // Welch param
-        this.startMs = startMs;
-
-        // Create window
-        this.timeIdx = timeIdx;
-        this.freqIdx = freqIdx;
+        this.welchAveType = welchAveType;
+        if (welchStartMs == null) this.welchStartMs = computeSampleStarts(samplingFrequency, new double[]{0});
+        else this.welchStartMs = ArrayFunctions.toPrimitiveArray(welchStartMs);
+        this.windowLength = windowLength;
+        this.windowTimeIdx = windowTimeIdx;
+        this.windowFrequencyIdx = windowFrequencyIdx;
         this.windowType = windowType;
-        windowFn = Windows.getWindow(windowLength, windowType, true);
+        this.windowFn = Windows.getWindow(windowLength, windowType, true);
+        this.outSize = null;
 
-        outSize = null;
 
-        Log.d(getClass().toString(), "Finished initializing");
+        Log.d(TAG, "Just created Classifier with these settings: \n" + this.toString());
     }
 
-    public edu.nl.ru.fieldtripclientsservice.threads.analysis.ClassifierResult apply(Matrix data) {
-        Log.v(getClass().toString(), "Applying classifier on data with shape " + data.shapeString());
-        Log.v(getClass().toString(), "With windows size " + windowFn.length);
+    public ClassifierResult apply(Matrix data) {
 
-        if (isBad != null) {
-            Log.d(getClass().toString(), "\tBad channel removal");
+        // Bad channel removal
+        if (thresholdIsBad != null) {
+            Log.d(TAG, "Do bad channel removal");
             int[] columns = Matrix.range(0, data.getColumnDimension(), 1);
-            int[] rows = new int[isBad.length];
+            int[] rows = new int[thresholdIsBad.length];
             int index = 0;
-            for (int i = 0; i < isBad.length; i++)
-                if (isBad[i] == 0) {
+            for (int i = 0; i < thresholdIsBad.length; i++)
+                if (thresholdIsBad[i] == 0) {
                     rows[index] = i;
                     index++;
                 }
             rows = Arrays.copyOf(rows, index);
             data = new Matrix(data.getSubMatrix(rows, columns));
-            Log.v(getClass().toString(), "Data shape after bad channel removal: " + data.shapeString());
+            Log.d(TAG, "Data shape after bad channel removal: " + data.shapeString());
         }
 
+        // Detrend the data
         if (detrend != null && detrend) {
+            Log.d(TAG, "Linearly detrending the data");
             data = data.detrend(1, "linear");
-            Log.v(getClass().toString(), "Detrending. New data shape: " + data.shapeString());
         }
 
+        // Again, bad channel removal
         List<Integer> badChannels = null;
         if (badChannelThreshold != null) {
-            Log.v(getClass().toString(), "\tSecond bad channel removal");
-            // TODO use more efficient multiplication of only rows
+            Log.d(TAG, "Second bad channel removal");
             Matrix norm = new Matrix(data.multiply(data.transpose()).scalarMultiply(1. / data.getColumnDimension()));
             badChannels = new LinkedList<Integer>();
+            // Detecting bad channels
             for (int r = 0; r < data.getRowDimension(); r++)
                 if (norm.getEntry(r, 0) > badChannelThreshold) {
-                    Log.v(getClass().toString(), "Channel " + r + " norm is higher than " + badChannelThreshold);
+                    Log.v(TAG, "Removing channel " + r);
                     badChannels.add(r);
                 }
 
+            // Filling bad channels with the mean (car)
             Matrix car = data.mean(0);
             for (int channel : badChannels) {
                 data.setRow(channel, car.getColumn(0));
             }
-            Log.v(getClass().toString(), "Second bad channel removal done. New data shape: " + data.shapeString());
         }
 
-        if (timeIdx != null) {
+        // Select the time range
+        if (windowTimeIdx != null) {
+            Log.d(TAG, "Selecting a time range");
             int[] rows = Matrix.range(0, data.getRowDimension(), 1);
-            Log.v(getClass().toString(), "\tTime range selection. Selecting rows: " + Arrays.toString(rows));
-            data = new Matrix(data.getSubMatrix(rows, ArrayFunctions.toPrimitiveArray(timeIdx)));
-            Log.v(getClass().toString(), "Time range selection done. New data shape: " + data.shapeString());
+            data = new Matrix(data.getSubMatrix(rows, ArrayFunctions.toPrimitiveArray(windowTimeIdx)));
+            Log.v(TAG, "New data shape after time range selection: " + data.shapeString());
         }
 
+        // Spatial filtering
         if (spatialFilter != null) {
-            Log.v(getClass().toString(), "\tSpatial filtering with: " + Arrays.toString(spatialFilter));
+            Log.d(TAG, "Spatial filtering the data");
             for (int r = 0; r < data.getRowDimension(); r++)
                 data.setRowVector(r, data.getRowVector(r).mapMultiply(spatialFilter[r]));
-            Log.v(getClass().toString(), "Spatial filtering done. New data shape: " + data.shapeString());
         }
 
+        // Welch frequency estimation
         if (data.getColumnDimension() >= windowFn.length) {
-            Log.v(getClass().toString(), "Spectral filtering with welch method");
-            Log.v(getClass().toString(), "Input size: " + data.shapeString());
-            Log.v(getClass().toString(), "Window size: " + windowFn.length);
-            double[] startMs = new double[]{0};
-            int[] start = computeSampleStarts(samplingFrequency, startMs);
-            data = data.welch(1, windowFn, start, windowLength, true);
-            Log.v(getClass().toString(), "Data shape: " + data.shapeString());
+            Log.v(TAG, "Spectral filtering with welch method");
+            data = data.welch(1, windowFn, welchStartMs, windowLength, true);
+            Log.v(TAG, "Data shape after welch frequency estimation: " + data.shapeString());
         }
 
-        if (freqIdx != null) {
-            Log.d(getClass().toString(), "Selecting subset of frequencies: " + Arrays.toString(freqIdx));
+        // Selecting frequencies
+        if (windowFrequencyIdx != null) {
             int[] allRows = Matrix.range(0, data.getRowDimension(), 1);
-            data = new Matrix(data.getSubMatrix(allRows, ArrayFunctions.toPrimitiveArray(freqIdx)));
-            Log.d(getClass().toString(), "Data shape: " + data.shapeString());
+            data = new Matrix(data.getSubMatrix(allRows, ArrayFunctions.toPrimitiveArray(windowFrequencyIdx)));
+            Log.d(TAG, "Data shape after frequency selection: " + data.shapeString());
         }
 
-        // FIXME is 0 the right dimension?
+        // Linearly classifying the data
+        Log.d(TAG, "Classifying with linear classifier");
         Matrix fraw = linearClassifier(data, 0);
-        Log.v(getClass().toString(), "Classifying with linear classifier");
-        // FIXME mean of sum over whole matrix is used to get the multi class f??
-        Log.v(getClass().toString(), "fraw shape: " + fraw.shapeString());
-
+        Log.v(TAG, "Results from the classifier (fraw): " + fraw.toString());
         Matrix f = new Matrix(fraw.copy());
+        // Removing bad channels from the classification
         if (badChannels != null) {
-            Log.v(getClass().toString(), "Removing bad channels from classification: " + Arrays.toString(badChannels.toArray()));
             for (int channel : badChannels)
                 f.setRowMatrix(channel, Matrix.zeros(1, f.getColumnDimension()));
-            Log.v(getClass().toString(), "f shape: " + f.shapeString());
         }
-
         Matrix p = new Matrix(f.copy());
         p.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
             public double visit(int row, int column, double value) {
                 return 1. / (1. + Math.exp(-value));
             }
         });
-        Log.v(getClass().toString(), "Computed class probability: " + p);
-        Log.v(getClass().toString(), "p shape: " + p.shapeString());
-        Log.v(getClass().toString(), "Done classifying");
+        Log.v(TAG, "Results from the classifier (p): " + p.toString());
         return new ClassifierResult(f, fraw, p, data);
     }
 
     private Matrix linearClassifier(Matrix data, int dim) {
-        Log.v(getClass().toString(), "Applying linear classifier (" + Ws.get(0).shapeString() + "->" + getOutputSize() + ") on data with" +
-                " shape " + data.shapeString() + " on dimension " + dim);
-        double[] results = new double[Ws.size()];
-        for (int i = 0; i < Ws.size(); i++)
-            results[i] = this.Ws.get(i).multiplyElements(data).sum().getEntry(0, 0) + b.getEntry(i);
+        double[] results = new double[classifierSlope.size()];
+        for (int i = 0; i < classifierSlope.size(); i++)
+            results[i] = this.classifierSlope.get(i).multiplyElements(data).sum().getEntry(0, 0) +
+                    classifierIntercept.getEntry(i);
         return new Matrix(results);
     }
 
@@ -204,20 +189,32 @@ public class Classifier {
 
     public Integer getSampleTrialLength(Integer sampleTrialLength) {
         if (outSize != null) return Math.max(sampleTrialLength, outSize[0]);
-        else if (timeIdx != null) return Math.max(sampleTrialLength, timeIdx[1]);
+        else if (windowTimeIdx != null) return Math.max(sampleTrialLength, windowTimeIdx[1]);
         else if (windowFn != null) return Math.max(sampleTrialLength, windowFn.length);
-        throw new RuntimeException("Either outSize, timeIdx or windowFn should be defined");
+        throw new RuntimeException("Either outSize, windowTimeIdx or windowFn should be defined");
     }
 
     public int getOutputSize() {
-        return Ws.size();
+        return classifierSlope.size();
     }
 
     public String toString() {
-        return "Classifier with parameters:" + "\nWindow Fn length:  \t" + windowFn.length + "\nstartMs            " +
-                "\t" + Arrays.toString(startMs) + "\nSpatial filter     \t" + Arrays.toString(spatialFilter) + "\nWs shape            " +
-                "\t" + (Ws != null ? Ws.get(0).shapeString() : "null") + "\nSpectrum mx shape  \t" + (spectrumMx != null ? spectrumMx.shapeString() : "null") + "\nb                  \t" + b + "\nSpectrum desc      \t" + Arrays.toString(spectrumDescription) + "\nType               \t" + type + "\nWelch ave type     \t" + welchAveType + "\nDetrend            \t" + detrend + "\nBad channel thres  \t" +
-                badChannelThreshold + "\nTime idx           \t" + Arrays.toString(timeIdx) + "\nFrequency idx      \t" + Arrays.toString(freqIdx) + "\nIs bad channel    \t" + Arrays.toString(isBad) + "\nDimension          \t" +
-                dimension + "\nWindow length      \t" + windowLength + "\nSampling frequency \t" + samplingFrequency + "\nWindow type        \t" + windowType;
+        return "Classifier with parameters:" + "\nWindow Fn length:  \t" + windowFn.length + "\nwelchStartMs         " +
+                "   " +
+                "\t" + Arrays.toString(welchStartMs) + "\nSpatial filter     \t" + Arrays.toString(spatialFilter) +
+                "\nclassifierSlope " +
+                "shape            " +
+                "\t" + (classifierSlope != null ? classifierSlope.get(0).shapeString() : "null") + "\nSpectrum mx " +
+                "shape  \t" + (spectrumMx != null ? spectrumMx.shapeString() : "null") + "\nclassifierIntercept      " +
+                "            \t" + classifierIntercept + "\nSpectrum desc      \t" + Arrays.toString
+                (spectrumDescription) + "\nType               \t" + type + "\nWelch ave type     \t" + welchAveType +
+                "\nDetrend            \t" + detrend + "\nBad channel thres  \t" +
+                badChannelThreshold + "\nTime idx           \t" + Arrays.toString(windowTimeIdx) + "\nFrequency idx  " +
+                "    " +
+                "\t" + Arrays.toString(windowFrequencyIdx) + "\nIs bad channel    \t" + Arrays.toString
+                (thresholdIsBad) + "\nDimension   " +
+                "       \t" +
+                dimension + "\nWindow length      \t" + windowLength + "\nSampling frequency \t" + samplingFrequency
+                + "\nWindow type        \t" + windowType;
     }
 }

@@ -6,7 +6,6 @@ import edu.nl.ru.linalg.Matrix;
  * Created by Pieter on 23-2-2015.
  * Result of a Classifier
  */
-@SuppressWarnings("WeakerAccess")
 public class ClassifierResult {
 
     public final Matrix f, fraw, p, X;
@@ -18,7 +17,7 @@ public class ClassifierResult {
         this.X = X;
     }
 
-    public ClassifierResult(edu.nl.ru.fieldtripclientsservice.threads.analysis.ClassifierResult classifierResult) {
+    public ClassifierResult(ClassifierResult classifierResult) {
         this.f = classifierResult.f;
         this.fraw = classifierResult.fraw;
         this.p = classifierResult.p;
@@ -26,6 +25,7 @@ public class ClassifierResult {
     }
 
     public String toString() {
-        return "Classifier result: " + "f" + f.shapeString() + ", fraw" + fraw.shapeString() + ", p" + p.shapeString() + ", X" + X.shapeString();
+        return "Classifier result: " + "f" + f.shapeString() + ", fraw" + fraw.shapeString() + ", p" + p.shapeString
+                () + ", X" + X.shapeString();
     }
 }

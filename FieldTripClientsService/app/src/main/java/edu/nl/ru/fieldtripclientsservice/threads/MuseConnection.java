@@ -1,9 +1,9 @@
 package edu.nl.ru.fieldtripclientsservice.threads;
 
 import android.util.Log;
+import com.interaxon.libmuse.*;
 import edu.nl.ru.fieldtripclientsservice.base.Argument;
 import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
-import com.interaxon.libmuse.*;
 import nl.fcdonders.fieldtrip.bufferclient.BufferClient;
 import nl.fcdonders.fieldtrip.bufferclient.DataType;
 import nl.fcdonders.fieldtrip.bufferclient.Header;
@@ -15,20 +15,17 @@ import java.util.List;
 
 /**
  * Created by Pieter Marsman on 6-4-2015.
+ * Connects to the muse using a bluetooth connection. Sends the EEG data to the fieldtrip buffer.
  */
 public class MuseConnection extends ThreadBase {
 
     public final String TAG = MuseConnection.class.toString();
-
-    private int BUFFERSIZE = 65500;
-
-    private BufferClient client = null;
     private Muse muse = null;
     private ConnectionListener connectionListener = null;
     private DataListener dataListener = null;
+    private BufferClient client = null;
     private boolean dataTransmission = true;
     private int nSamples;
-
     private String address;
     private int port;
     private int channels;
@@ -46,6 +43,16 @@ public class MuseConnection extends ThreadBase {
         return arguments;
     }
 
+    private void initialize() {
+        address = arguments[0].getString();
+        port = arguments[1].getInteger();
+        channels = arguments[2].getInteger();
+        samplingFrequency = arguments[3].getInteger();
+        dataType = arguments[4].getInteger();
+        android.updateStatus("Address: " + address + ":" + String.valueOf(port));
+        Log.d(TAG, this.toString());
+    }
+
     @Override
     public String getName() {
         return "MuseConnection";
@@ -57,14 +64,7 @@ public class MuseConnection extends ThreadBase {
      */
     @Override
     public void mainloop() {
-        // Create listeners and pass reference to activity to them
-        address = arguments[0].getString();
-        port = arguments[1].getInteger();
-        channels = arguments[2].getInteger();
-        samplingFrequency = arguments[3].getInteger();
-        dataType = arguments[4].getInteger();
-        android.updateStatus("Address: " + address + ":" + String.valueOf(port));
-        Log.i(TAG, "Buffer server: " + address + " : " + port);
+        initialize();
 
         // Connect to the muse headband
         connectionListener = new ConnectionListener();
@@ -167,6 +167,7 @@ public class MuseConnection extends ThreadBase {
             try {
                 client.connect(address, port);
             } catch (IOException ex) {
+                Log.e(TAG, "Could not connect to buffer. Maybe the address or port is wrong?");
             }
             if (!client.isConnected()) {
                 android.updateStatus("Couldn't connect. Waiting");
@@ -200,7 +201,7 @@ public class MuseConnection extends ThreadBase {
     /**
      * Not implemented yet
      *
-     * @param arguments
+     * @param arguments arguments to be validated
      */
     @Override
     public void validateArguments(Argument[] arguments) {
@@ -210,16 +211,23 @@ public class MuseConnection extends ThreadBase {
     @Override
     public void stop() {
         disconnectMuse();
-        if (client != null)
-            try {
-                client.disconnect();
-            } catch (IOException e) {
-                Log.e(TAG, Log.getStackTraceString(e));
-            } finally {
-                client = null;
-            }
+        if (client != null) try {
+            client.disconnect();
+        } catch (IOException e) {
+            Log.e(TAG, Log.getStackTraceString(e));
+        } finally {
+            client = null;
+        }
 
         super.stop();
+    }
+
+    public String toString() {
+        return "MuseConnection with parameters: \n" +
+                "Buffer: " + address + ":" + String.valueOf(port) + "\n" +
+                "Channels: " + String.valueOf(channels) + "\n" +
+                "Sampling frequency: " + String.valueOf(samplingFrequency) + "\n" +
+                "Datatype: " + String.valueOf(dataType);
     }
 
     /**

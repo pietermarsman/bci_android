@@ -1,26 +1,21 @@
 package edu.nl.ru.fieldtripclientsservice.base;
 
-import android.content.Context;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public interface AndroidHandle {
 
-	FileInputStream openReadFile(String path) throws IOException;
+    FileInputStream openReadFile(String path) throws IOException;
 
-	FileOutputStream openWriteFile(String path) throws IOException;
+    InputStream openAsset(String path) throws IOException;
 
-	void toast(String message);
+    FileOutputStream openWriteFile(String path) throws IOException;
 
-	void toastLong(String message);
+    void toast(String message);
 
-	void updateStatus(String status);
+    void toastLong(String message);
 
-    /**
-     * Useful for revering to the environment of the android device
-     * @return The android context
-     */
-    public Context getContext();
+    void updateStatus(String status);
 }
