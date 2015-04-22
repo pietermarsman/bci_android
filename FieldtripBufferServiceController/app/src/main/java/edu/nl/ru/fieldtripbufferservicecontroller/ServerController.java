@@ -1,4 +1,4 @@
-package nl.edu.ru.fieldtripbufferservicecontroller;
+package edu.nl.ru.fieldtripbufferservicecontroller;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -15,8 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-import nl.edu.ru.monitor.BufferInfo;
-import nl.edu.ru.monitor.ClientInfo;
+import edu.nl.ru.monitor.BufferInfo;
+import edu.nl.ru.monitor.ClientInfo;
 
 /**
  * Created by georgedimitriadis on 08/02/15.

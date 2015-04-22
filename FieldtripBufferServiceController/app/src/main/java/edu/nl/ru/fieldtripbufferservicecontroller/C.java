@@ -1,4 +1,4 @@
-package nl.edu.ru.fieldtripbufferservicecontroller;
+package edu.nl.ru.fieldtripbufferservicecontroller;
 
 
 /**

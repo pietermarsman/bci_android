@@ -1,11 +1,11 @@
-package nl.edu.ru.fieldtripbufferservicecontroller;
+package edu.nl.ru.fieldtripbufferservicecontroller;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import nl.edu.ru.monitor.BufferInfo;
+import edu.nl.ru.monitor.BufferInfo;
 
 
 public class FBServiceControllerBroadcastReceiver extends BroadcastReceiver {

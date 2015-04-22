@@ -1,9 +1,9 @@
-package nl.edu.ru.monitor;
+package edu.nl.ru.monitor;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import nl.edu.ru.fieldtripbufferservicecontroller.C;
+import edu.nl.ru.fieldtripbufferservicecontroller.C;
 
 public class BufferInfo implements Parcelable {
 

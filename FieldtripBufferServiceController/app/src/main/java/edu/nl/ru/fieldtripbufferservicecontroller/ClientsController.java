@@ -1,4 +1,4 @@
-package nl.edu.ru.fieldtripbufferservicecontroller;
+package edu.nl.ru.fieldtripbufferservicecontroller;
 
 import android.app.ActivityManager;
 import android.content.ComponentName;
@@ -12,8 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.edu.ru.fieldtripclientsservice.ThreadInfo;
-import nl.edu.ru.fieldtripclientsservice.base.Argument;
+import edu.nl.ru.fieldtripclientsservice.ThreadInfo;
+import edu.nl.ru.fieldtripclientsservice.base.Argument;
 
 /**
  * Created by georgedimitriadis on 08/02/15.

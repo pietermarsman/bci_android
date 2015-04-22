@@ -1,9 +1,9 @@
-package nl.edu.ru.fieldtripclientsservice;
+package edu.nl.ru.fieldtripclientsservice;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import nl.edu.ru.fieldtripbufferservicecontroller.C;
+import edu.nl.ru.fieldtripbufferservicecontroller.C;
 
 public class ThreadInfo implements Parcelable {
 	public int threadID;

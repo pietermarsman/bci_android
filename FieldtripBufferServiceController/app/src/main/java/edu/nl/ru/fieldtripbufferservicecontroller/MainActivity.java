@@ -1,4 +1,4 @@
-package nl.edu.ru.fieldtripbufferservicecontroller;
+package edu.nl.ru.fieldtripbufferservicecontroller;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,9 +9,9 @@ import android.util.Log;
 
 import com.unity3d.player.UnityPlayerActivity;
 
-import nl.edu.ru.fieldtripclientsservice.ThreadInfo;
-import nl.edu.ru.fieldtripclientsservice.base.Argument;
-import nl.edu.ru.monitor.ClientInfo;
+import edu.nl.ru.fieldtripclientsservice.ThreadInfo;
+import edu.nl.ru.fieldtripclientsservice.base.Argument;
+import edu.nl.ru.monitor.ClientInfo;
 
 
 public class MainActivity extends UnityPlayerActivity {
