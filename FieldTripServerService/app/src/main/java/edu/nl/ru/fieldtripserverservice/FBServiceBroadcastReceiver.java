@@ -6,11 +6,8 @@ import android.content.Intent;
 import android.util.Log;
 
 public class FBServiceBroadcastReceiver extends BroadcastReceiver {
-    
-    public static String TAG = FBServiceBroadcastReceiver.class.toString();
-    
-    public FBServiceBroadcastReceiver() {
-    }
+
+    public static final String TAG = FBServiceBroadcastReceiver.class.toString();
 
     @Override
     public void onReceive(Context context, Intent intent) {

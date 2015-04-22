@@ -14,23 +14,17 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-import java.util.Locale;
-
 import edu.nl.ru.fieldtripserverservice.monitor.BufferMonitor;
 import nl.fcdonders.fieldtrip.bufferserver.BufferServer;
 
+import java.util.Locale;
+
 public class FieldTripServerService extends Service {
-	
-	public static String TAG = FieldTripServerService.class.toString();
 
-	private BufferServer buffer;
-	private BufferMonitor monitor;
-	private WakeLock wakeLock;
-	private WifiLock wifiLock;
-
-    IntentFilter intentFilter = new IntentFilter(C.FILTER);
-    BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    public static final String TAG = FieldTripServerService.class.toString();
+    private final IntentFilter intentFilter = new IntentFilter(C.FILTER);
+    private BufferServer buffer;
+    private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, Intent intent) {
             Log.i(TAG, "Dealing with Flush request");
@@ -51,96 +45,100 @@ public class FieldTripServerService extends Service {
             }
         }
     };
+    private BufferMonitor monitor;
+    private WakeLock wakeLock;
+    private WifiLock wifiLock;
 
-	@Override
-	public IBinder onBind(final Intent intent) {
-		return null;
-	}
+    @Override
+    public IBinder onBind(final Intent intent) {
+        return null;
+    }
 
-	/**
-	 * Called when the service is stopped. Stops the buffer.
-	 */
-	@Override
-	public void onDestroy() {
-		Log.i(TAG, "Stopping Buffer Service.");
+    /**
+     * Called when the service is stopped. Stops the buffer.
+     */
+    @Override
+    public void onDestroy() {
+        Log.i(TAG, "Stopping Buffer Service.");
         this.unregisterReceiver(mMessageReceiver);
-		if (buffer != null) {
-			buffer.stopBuffer();
-		}
-		if (monitor != null) {
-			monitor.stopMonitoring();
-		}
-		if (wakeLock != null) {
-			wakeLock.release();
-		}
-		if (wifiLock != null) {
-			wifiLock.release();
-		}
-	}
+        if (buffer != null) {
+            buffer.stopBuffer();
+        }
+        if (monitor != null) {
+            monitor.stopMonitoring();
+        }
+        if (wakeLock != null) {
+            wakeLock.release();
+        }
+        if (wifiLock != null) {
+            wifiLock.release();
+        }
+    }
 
-	@Override
-	public int onStartCommand(final Intent intent, final int flags, final int startId) {
-		Log.i(TAG, "Buffer Service Running");
-		// If no buffer is running.
-		if (buffer == null) {
+    @Override
+    public int onStartCommand(final Intent intent, final int flags, final int startId) {
+        Log.i(TAG, "Buffer Service Running");
+        // If no buffer is running.
+        if (buffer == null) {
 
-			final int port = intent.getIntExtra("port", 1972);
-			// Get Wakelocks
+            final int port = intent.getIntExtra("port", 1972);
+            // Get Wakelocks
 
-			final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-			wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-					C.WAKELOCKTAG);
-			wakeLock.acquire();
+            final PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    C.WAKELOCKTAG);
+            wakeLock.acquire();
 
-			final WifiManager wifiMan = (WifiManager) getSystemService(WIFI_SERVICE);
-			wifiLock = wifiMan.createWifiLock(C.WAKELOCKTAGWIFI);
-			wifiLock.acquire();
+            final WifiManager wifiMan = (WifiManager) getSystemService(WIFI_SERVICE);
+            wifiLock = wifiMan.createWifiLock(C.WAKELOCKTAGWIFI);
+            wifiLock.acquire();
 
-			// Create Foreground Notification
+            // Create Foreground Notification
 
-			// Get the currently used ip-address
-			final WifiInfo wifiInf = wifiMan.getConnectionInfo();
-			final int ipAddress = wifiInf.getIpAddress();
-			final String ip = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
-					ipAddress & 0xff, ipAddress >> 8 & 0xff,
-					ipAddress >> 16 & 0xff, ipAddress >> 24 & 0xff);
+            // Get the currently used ip-address
+            final WifiInfo wifiInf = wifiMan.getConnectionInfo();
+            final int ipAddress = wifiInf.getIpAddress();
+            final String ip = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
+                    ipAddress & 0xff, ipAddress >> 8 & 0xff,
+                    ipAddress >> 16 & 0xff, ipAddress >> 24 & 0xff);
 
-			// Create notification text
-			final Resources res = getResources();
-			final String notification_text = String.format(
-					res.getString(R.string.notification_text), ip + ":" + port);
+            // Create notification text
+            final Resources res = getResources();
+            final String notification_text = String.format(
+                    res.getString(R.string.notification_text), ip + ":" + port);
 
-			final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
-					this)
-					.setSmallIcon(R.drawable.ic_launcher)
-					.setContentTitle(res.getString(R.string.notification_title))
-					.setContentText(notification_text);
-
-
-			// Create a buffer and start it.
-			buffer = new BufferServer(port, intent.getIntExtra("nSamples", 100),
-					intent.getIntExtra("nEvents", 100));
-			monitor = new BufferMonitor(this, ip + ":" + port,
-					System.currentTimeMillis());
-			buffer.addMonitor(monitor);
-
-			// Start the buffer and Monitor
-			buffer.start(); Log.i(TAG, "1");
-			monitor.start();
-			Log.i(TAG, "Buffer thread started.");
-
-			// Turn this service into a foreground service
-			startForeground(1, mBuilder.build());
-			Log.i(TAG, "Fieldtrip Buffer Service moved to foreground.");
+            final NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
+                    this)
+                    .setSmallIcon(R.drawable.ic_launcher)
+                    .setContentTitle(res.getString(R.string.notification_title))
+                    .setContentText(notification_text);
 
 
-            if(buffer !=null) {
+            // Create a buffer and start it.
+            buffer = new BufferServer(port, intent.getIntExtra("nSamples", 100),
+                    intent.getIntExtra("nEvents", 100));
+            monitor = new BufferMonitor(this, ip + ":" + port,
+                    System.currentTimeMillis());
+            buffer.addMonitor(monitor);
+
+            // Start the buffer and Monitor
+            buffer.start();
+            Log.i(TAG, "1");
+            monitor.start();
+            Log.i(TAG, "Buffer thread started.");
+
+            // Turn this service into a foreground service
+            startForeground(1, mBuilder.build());
+            Log.i(TAG, "Fieldtrip Buffer Service moved to foreground.");
+
+
+            if (buffer != null) {
                 this.registerReceiver(mMessageReceiver, intentFilter);
-                Log.i(TAG, "Registered receiver with buffer:"+buffer.getName());
+                Log.i(TAG, "Registered receiver with buffer:" + buffer.getName());
             }
 
 
-		}
-		return START_NOT_STICKY;
-	}
+        }
+        return START_NOT_STICKY;
+    }
 }
