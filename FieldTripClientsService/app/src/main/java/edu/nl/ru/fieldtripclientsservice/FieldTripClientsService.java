@@ -52,18 +52,19 @@ public class FieldTripClientsService extends Service {
                     break;
                 case C.THREAD_PAUSE:
                     id = intent.getIntExtra(C.THREAD_ID, -1);
+                    Log.i(TAG, "Stopping Thread with ID: " + id);
                     threads.get(id).stop();
                     threadInfos.get(id).running = false;
                     updater.update = false;
                     break;
                 case C.THREAD_START:
                     id = intent.getIntExtra(C.THREAD_ID, -1);
-                    Log.i(TAG, "Starting Thread with ID: " + id);
-                    if (!wrappers.get(id).started) {
-                        wrappers.get(id).start();
-                    } else {
-                        wrappers.get(id).start();
-                    }
+                    if (wrappers.get(id).started) {
+                        Log.i(TAG, "Restarting Thread with ID: " + id);
+                        wrappers.setValueAt(id, new WrapperThread(wrappers.get(id).base));
+                    } else
+                        Log.i(TAG, "Starting Thread with ID: " + id);
+                    wrappers.get(id).start();
                     threadInfos.get(id).running = true;
                     updater.update = true;
                     break;
@@ -381,7 +382,6 @@ public class FieldTripClientsService extends Service {
         @Override
         public void run() {
             while (run) {
-                Log.i(TAG, "Running");
                 try {
                     Thread.sleep(1000);
                     if (update) {
