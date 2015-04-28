@@ -13,8 +13,8 @@ The FieldtripClientsService creates an Android service (with no activity) that s
 The FieldtripServerService and FieldtripClientService are designed to communicate with the FieldtripBufferServicesController through Intents.
 
 Versions:
-Android Studio 1.0.1 or Intellij 14
-Unity 5.0.1
+Android Studio 1.0.1 or Intellij 14, 
+Unity 5.0.1, 
 Android API targeted 21, minimum 16
 
 
@@ -22,6 +22,7 @@ Android API targeted 21, minimum 16
 Unity Android plugins work only on actual devices so a developing device must be used.
 
 In a Unity project with the required Plugins/Android files setup one needs the FieldtripServicesControlerInterface.cs script which exposes the interface that the plugin provides to the Server and the Clients Services.
+
 The UnityFieldtripBufferServicesController project gives an example of this setup and also provides a simple GUI that can be used to control the Server and the Clients.
 To change Unity project, simply open it with Unity 5. 
 
