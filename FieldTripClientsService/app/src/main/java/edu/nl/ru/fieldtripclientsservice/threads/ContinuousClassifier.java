@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class ContinuousClassifier extends ThreadBase {
 
-    private static final String TAG = ContinuousClassifier.class.toString();
+    private static final String TAG = ContinuousClassifier.class.getSimpleName();
 
     private String bufferHost;
     private String endValue;
@@ -298,7 +298,7 @@ public class ContinuousClassifier extends ThreadBase {
                 // Apply all classifiers and add results
                 Matrix f = new Matrix(classifiers.get(0).getOutputSize(), 1);
                 Matrix fraw = new Matrix(classifiers.get(0).getOutputSize(), 1);
-                ClassifierResult result;
+                ClassifierResult result = null;
                 for (Classifier c : classifiers) {
                     result = c.apply(data);
                     f = new Matrix(f.add(result.f));
@@ -312,15 +312,14 @@ public class ContinuousClassifier extends ThreadBase {
                 if (normalizeLatitude) f.setEntry(0, 0, (dvColumn[0] - dvColumn[1]) / (dvColumn[0] + dvColumn[1]));
                 else f.setEntry(0, 0, dvColumn[0] - dvColumn[1]);
 
+
                 // Smooth the classifiers
                 if (dv == null || predictionFilter == null) dv = f;
                 else {
-                    if (predictionFilter > 0.) {
-                        dv = new Matrix(dv.scalarMultiply(predictionFilter).add(f.scalarMultiply(1. -
-                                predictionFilter)));
+                    if (predictionFilter >= 0.) {
+                        dv = new Matrix(dv.scalarMultiply(1. - predictionFilter).add(f.scalarMultiply(predictionFilter)));
                     }
                 }
-                Log.d(TAG, "Result from classifiers: \n" + Arrays.toString(dv.getColumn(0)));
 
                 // Update baseline
                 if (baselinePhase) {
@@ -340,7 +339,6 @@ public class ContinuousClassifier extends ThreadBase {
                 dv = new Matrix(dv.subtract(baseLineVal)).divideElements(baseLineVar);
 
                 // Send prediction event
-                Log.d(TAG, "SEND event value: " + Arrays.toString(dv.getColumn(0)));
                 try {
                     BufferEvent event = new BufferEvent(predictionEventType, dv.getColumn(0), fromId);
                     C.putEvent(event);
