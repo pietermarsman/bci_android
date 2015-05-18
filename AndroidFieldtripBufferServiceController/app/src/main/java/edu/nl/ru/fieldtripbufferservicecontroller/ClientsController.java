@@ -119,6 +119,7 @@ public class ClientsController {
 
     public boolean stopClientsService() {
         threadInfos.clear();
+        threadIDs.clear();
         if (allArguments != null) allArguments.clear();
         boolean stopped = context.stopService(intent);
         Log.i(TAG, "Trying to stop clients service: " + stopped);

@@ -16,7 +16,9 @@ import edu.nl.ru.fieldtripclientsservice.ThreadInfo;
 import edu.nl.ru.fieldtripclientsservice.base.Argument;
 import edu.nl.ru.monitor.ClientInfo;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 
 public class MainActivity extends Activity {
@@ -114,6 +116,10 @@ public class MainActivity extends Activity {
     // Gui
     private void updateClientsGui() {
         int[] threadIDs = clientsController.getAllThreadIDs();
+        if (threadIDs.length < 1) {
+            table.removeViews(2, threadToView.size());
+            threadToView.clear();
+        }
         int newIndex = table.getChildCount();
         for (int threadID : threadIDs) {
             if (!threadToView.containsKey(threadID)) {
@@ -127,8 +133,8 @@ public class MainActivity extends Activity {
                 stop.setOnClickListener(getThreadStopper(threadID));
                 row.addView(start);
                 row.addView(stop);
-                threadToView.put(threadID, newIndex);
                 table.addView(row, newIndex);
+                threadToView.put(threadID, newIndex);
                 newIndex++;
             }
         }
@@ -179,6 +185,7 @@ public class MainActivity extends Activity {
         if (clientsController.isClientsServiceRunning()) {
             result = clientsController.stopClientsService();
         }
+        updateClientsGui();
     }
 }
 
