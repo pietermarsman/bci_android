@@ -65,7 +65,9 @@ public class BubbleSurfaceView extends SurfaceView implements SurfaceHolder.Call
         bufferThread.setRunning(false);
         while (retry) {
             try {
-                drawThread.join();
+                synchronized (sh) {
+                    drawThread.join();
+                }
                 bufferThread.join();
                 retry = false;
             } catch (InterruptedException e) {
