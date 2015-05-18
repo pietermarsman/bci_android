@@ -6,56 +6,28 @@
 
     <LinearLayout
             android:orientation="vertical"
-            android:layout_width="wrap_content"
+            android:layout_width="@dimen/switch_bar_width"
             android:layout_height="wrap_content">
-        <TableLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" android:id="@+id/table">
-
-            <TableRow
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                <Button
-                        style="?android:attr/buttonStyleSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Start buffer"
-                        android:id="@+id/button"
-                        android:onClick="startServer"/>
-
-                <Button
-                        style="?android:attr/buttonStyleSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Stop buffer"
-                        android:id="@+id/button3"
-                        android:onClick="stopServer"/>
-            </TableRow>
-
-            <TableRow
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
-
-                <Button
-                        style="?android:attr/buttonStyleSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Start clients"
-                        android:id="@+id/button2"
-                        android:onClick="startClients"/>
-
-                <Button
-                        style="?android:attr/buttonStyleSmall"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Stop clients"
-                        android:id="@+id/button4"
-                        android:onClick="stopClients"/>
-
-            </TableRow>
-
-        </TableLayout>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" android:focusableInTouchMode="false" android:id="@+id/switches"
+                >
+            <Switch
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Server"
+                    android:id="@+id/switch1"
+                    android:checked="false"
+                    android:onClick="onToggleServerSwitch"/>
+            <Switch
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Clients"
+                    android:id="@+id/switch2"
+                    android:checked="false"
+                    android:onClick="onToggleClientsSwitch"/>
+        </LinearLayout>
         <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"

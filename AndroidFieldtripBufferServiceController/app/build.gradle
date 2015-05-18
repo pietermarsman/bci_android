@@ -5,7 +5,7 @@ android {
     buildToolsVersion "21.1.2"
     defaultConfig {
         applicationId 'edu.nl.ru.fieldtripbufferservicecontroller'
-        minSdkVersion 9
+        minSdkVersion 16
         targetSdkVersion 16
         versionCode 1
         versionName "1.0"

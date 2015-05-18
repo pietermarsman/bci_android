@@ -7,23 +7,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
+import android.widget.*;
 import edu.nl.ru.fieldtripbufferservicecontroller.visualize.BubbleSurfaceView;
 import edu.nl.ru.fieldtripclientsservice.ThreadInfo;
 import edu.nl.ru.fieldtripclientsservice.base.Argument;
 import edu.nl.ru.monitor.ClientInfo;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 
 public class MainActivity extends Activity {
 
-    private static final int LARGEPRIME = 961748927;
     public static String TAG = MainActivity.class.getSimpleName();
 
     public ServerController serverController;
@@ -33,7 +27,7 @@ public class MainActivity extends Activity {
 
     // Gui
     private TextView textView;
-    private TableLayout table;
+    private LinearLayout table;
     private HashMap<Integer, Integer> threadToView;
     private BubbleSurfaceView surfaceView;
 
@@ -44,7 +38,7 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.main_activity);
         textView = (TextView) findViewById(R.id.textView);
-        table = (TableLayout) findViewById(R.id.table);
+        table = (LinearLayout) findViewById(R.id.switches);
         threadToView = new HashMap<Integer, Integer>();
         surfaceView = (BubbleSurfaceView) findViewById(R.id.surfaceView);
 
@@ -67,8 +61,8 @@ public class MainActivity extends Activity {
     public void onStop() {
         super.onStop();
         this.unregisterReceiver(mMessageReceiver);
-        stopClients(null);
-        stopServer(null);
+        stopClients();
+        stopServer();
     }
 
     private void updateServerController(Intent intent) {
@@ -124,16 +118,10 @@ public class MainActivity extends Activity {
         for (int threadID : threadIDs) {
             if (!threadToView.containsKey(threadID)) {
                 String title = clientsController.getThreadTitle(threadID);
-                TableRow row = new TableRow(this);
-                Button start = new Button(this);
-                start.setText("Start " + title);
-                start.setOnClickListener(getThreadStarter(threadID));
-                Button stop = new Button(this);
-                stop.setText("Stop " + title);
-                stop.setOnClickListener(getThreadStopper(threadID));
-                row.addView(start);
-                row.addView(stop);
-                table.addView(row, newIndex);
+                Switch newSwitch = new Switch(this);
+                newSwitch.setText(title);
+                newSwitch.setOnClickListener(getThreadStarter(threadID));
+                table.addView(newSwitch, newIndex);
                 threadToView.put(threadID, newIndex);
                 newIndex++;
             }
@@ -144,48 +132,60 @@ public class MainActivity extends Activity {
         return new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                clientsController.startThread(threadID);
-            }
-        };
-    }
-
-    private View.OnClickListener getThreadStopper(final int threadID) {
-        return new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                clientsController.stopThread(threadID);
+                Switch switchView = (Switch) view;
+                if (switchView.isChecked())
+                    clientsController.startThread(threadID);
+                else
+                    clientsController.stopThread(threadID);
             }
         };
     }
 
     //Interface
-    public void startServer(View view) {
+
+    public void startServer() {
         String serverName = "";
         if (!serverController.isBufferServerServiceRunning()) {
             serverName = serverController.startServerService();
         }
     }
 
-    public void startClients(View view) {
+    public void startClients() {
         String clientsName = "";
         if (!clientsController.isClientsServiceRunning()) {
             clientsName = clientsController.startClientsService();
         }
     }
 
-    public void stopServer(View view) {
+    public void stopServer() {
         boolean result = false;
         if (serverController.isBufferServerServiceRunning()) {
             result = serverController.stopServerService();
         }
     }
 
-    public void stopClients(View view) {
+    public void stopClients() {
         boolean result = false;
         if (clientsController.isClientsServiceRunning()) {
             result = clientsController.stopClientsService();
         }
         updateClientsGui();
+    }
+
+    public void onToggleServerSwitch(View view) {
+        Switch switchView = (Switch) view;
+        if (switchView.isChecked())
+            startServer();
+        else
+            stopServer();
+    }
+
+    public void onToggleClientsSwitch(View view) {
+        Switch switchView = (Switch) view;
+        if (switchView.isChecked())
+            startClients();
+        else
+            stopClients();
     }
 }
 
