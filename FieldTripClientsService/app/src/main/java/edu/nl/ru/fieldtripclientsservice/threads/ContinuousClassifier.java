@@ -184,7 +184,7 @@ public class ContinuousClassifier extends ThreadBase {
         arguments[2] = new Argument("Header", null);
         arguments[3] = new Argument("End type", "stimulus.test");
         arguments[4] = new Argument("End value", "end");
-        arguments[5] = new Argument("Prediction event type", "classifier.prediction");
+        arguments[5] = new Argument("Prediction event type", "alphaLat");
         arguments[6] = new Argument("Baseline event type", "stimulus.startbaseline");
         arguments[7] = new Argument("Baseline end", null);
         arguments[8] = new Argument("Baseline start", "start");

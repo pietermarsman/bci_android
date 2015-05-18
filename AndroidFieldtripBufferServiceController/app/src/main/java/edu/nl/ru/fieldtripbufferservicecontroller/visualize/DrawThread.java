@@ -55,15 +55,23 @@ public class DrawThread extends Thread {
     }
 
     private int computeColor(float values[]) {
-        max[0] = Math.max(values[1], max[0]);
-        max[1] = Math.max(values[2], max[1]);
-        max[2] = Math.max(values[3], max[2]);
-        float[] colors = new float[]{values[1] / max[0] * 360, values[2] / max[1], values[3] / max[2]};
-        return Color.HSVToColor(colors);
+        float avg = (values[1] + values[2] + values[3]) / 3.f;
+        if (Math.abs(avg) > 5.)
+            avg = 0.f;
+        int mean = 128;
+        int std = 64;
+        int red = (int) (mean + avg * std);
+        red = Math.max(Math.min(red, 255), 0);
+        int green = 255 - red;
+        return Color.rgb(red, green, 0);
     }
 
     private int computeSize(float values[]) {
-        return (int) (values[0] * 800.);
+        float meanSize = 200.f;
+        float stdSize = 200.f;
+        float newSize = meanSize - values[0] * stdSize;
+        newSize = Math.max(Math.min(newSize, Math.min(canvasHeight, canvasWidth)), 20.f);
+        return (int) newSize;
     }
 
     public void run() {
