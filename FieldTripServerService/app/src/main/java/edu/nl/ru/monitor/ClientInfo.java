@@ -1,4 +1,4 @@
-package edu.nl.ru.fieldtripserverservice.monitor;
+package edu.nl.ru.monitor;
 
 import android.os.Parcel;
 import android.os.Parcelable;

@@ -24,7 +24,7 @@
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
-                <action android:name="nl.edu.ru.fieldtripbufferservicecontroller.action.UPDATEINFO" />
+                <action android:name="edu.nl.ru.fieldtripbufferservicecontroller.action.UPDATEINFO" />
             </intent-filter>
         </receiver>
     </application>

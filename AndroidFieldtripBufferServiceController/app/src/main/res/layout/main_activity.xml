@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+        <TableLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:id="@+id/table">
+
+            <TableRow
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                <Button
+                        style="?android:attr/buttonStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Start buffer"
+                        android:id="@+id/button"
+                        android:onClick="startServer"/>
+
+                <Button
+                        style="?android:attr/buttonStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Stop buffer"
+                        android:id="@+id/button3"
+                        android:onClick="stopServer"/>
+            </TableRow>
+
+            <TableRow
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                <Button
+                        style="?android:attr/buttonStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Start clients"
+                        android:id="@+id/button2"
+                        android:onClick="startClients"/>
+
+                <Button
+                        style="?android:attr/buttonStyleSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Stop clients"
+                        android:id="@+id/button4"
+                        android:onClick="stopClients"/>
+
+            </TableRow>
+
+        </TableLayout>
+        <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:text="New Text"
+                android:id="@+id/textView" android:autoText="false"/>
+    </LinearLayout>
+    <edu.nl.ru.fieldtripbufferservicecontroller.visualize.BubbleSurfaceView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/surfaceView">
+    </edu.nl.ru.fieldtripbufferservicecontroller.visualize.BubbleSurfaceView>
+
+</LinearLayout>

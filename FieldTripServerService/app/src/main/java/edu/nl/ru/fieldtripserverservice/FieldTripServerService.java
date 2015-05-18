@@ -15,7 +15,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import edu.nl.ru.fieldtripserverservice.monitor.BufferMonitor;
+import edu.nl.ru.monitor.BufferMonitor;
 import nl.fcdonders.fieldtrip.bufferserver.BufferServer;
 
 import java.io.File;
