@@ -61,6 +61,10 @@ public class MainActivity extends Activity {
     public void onStop() {
         super.onStop();
         this.unregisterReceiver(mMessageReceiver);
+    }
+
+    @Override
+    public void onDestroy() {
         stopClients();
         stopServer();
     }

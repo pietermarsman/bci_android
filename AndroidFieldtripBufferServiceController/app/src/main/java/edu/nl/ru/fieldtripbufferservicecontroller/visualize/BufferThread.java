@@ -29,6 +29,7 @@ public class BufferThread extends Thread {
     }
 
     public float[] getValues() {
+        // todo use shared memory
         if (values != null) return values;
         else return new float[]{0.f, 0.f, 0.f, 0.f};
     }

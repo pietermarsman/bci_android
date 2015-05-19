@@ -27,6 +27,8 @@ public class DrawThread extends Thread {
     private float size;
     private float[] max;
 
+    float baddnessFilter;
+
     private BufferThread bufferThread;
 
     public DrawThread(SurfaceHolder surfaceHolder, Context context, Handler handler, BufferThread bufferThread) {
@@ -35,6 +37,7 @@ public class DrawThread extends Thread {
         ctx = context;
         max = new float[3];
         this.bufferThread = bufferThread;
+        baddnessFilter = 0.0f;
     }
 
     public void initializeModel() {
@@ -55,12 +58,10 @@ public class DrawThread extends Thread {
     }
 
     private int computeColor(float values[]) {
-        float avg = (values[1] + values[2] + values[3]) / 3.f;
-        if (Math.abs(avg) > 5.)
-            avg = 0.f;
+        baddnessFilter = (float) (0.3 * values[1] + 0.7 * baddnessFilter);
         int mean = 128;
         int std = 64;
-        int red = (int) (mean + avg * std);
+        int red = (int) (mean + baddnessFilter * std);
         red = Math.max(Math.min(red, 255), 0);
         int green = 255 - red;
         return Color.rgb(red, green, 0);
