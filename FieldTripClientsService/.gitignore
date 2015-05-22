@@ -17,7 +17,7 @@ hs_err_pid*
 
 ### Android ###
 # Built application files
-*.apk
+#*.apk
 *.ap_
 
 # Files for the Dalvik VM
@@ -32,7 +32,7 @@ gen/
 
 # Gradle files
 .gradle/
-build/
+build/*
 /*/build/
 
 # Local configuration file (sdk path, etc)

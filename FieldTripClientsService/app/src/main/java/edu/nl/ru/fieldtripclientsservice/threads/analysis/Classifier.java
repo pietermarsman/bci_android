@@ -1,11 +1,11 @@
 package edu.nl.ru.fieldtripclientsservice.threads.analysis;
 
 import android.util.Log;
-import edu.nl.ru.linalg.Matrix;
-import edu.nl.ru.linalg.WelchOutputType;
-import edu.nl.ru.miscellaneous.ArrayFunctions;
-import edu.nl.ru.miscellaneous.ParameterChecker;
-import edu.nl.ru.miscellaneous.Windows;
+import edu.nl.ru.matrixalgebra.linalg.Matrix;
+import edu.nl.ru.matrixalgebra.linalg.WelchOutputType;
+import edu.nl.ru.matrixalgebra.miscellaneous.ArrayFunctions;
+import edu.nl.ru.matrixalgebra.miscellaneous.ParameterChecker;
+import edu.nl.ru.matrixalgebra.miscellaneous.Windows;
 import org.apache.commons.math3.linear.DefaultRealMatrixChangingVisitor;
 import org.apache.commons.math3.linear.RealVector;
 

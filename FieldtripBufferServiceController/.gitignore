@@ -10,6 +10,7 @@
 *.jar
 *.war
 *.ear
+!*_fieldtripbufferservicecontroller.jar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
@@ -44,6 +45,9 @@ proguard/
 # Log Files
 *.log
 
+### Android Patch ###
+gen-external-apklibs
+
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
@@ -51,27 +55,27 @@ proguard/
 *.iml
 
 ## Directory-based project format:
-# .idea/
+.idea/
 # if you remove the above rule, at least ignore the following:
 
 # User-specific stuff:
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/dictionaries
+# .idea/workspace.xml
+# .idea/tasks.xml
+# .idea/dictionaries
 
 # Sensitive or high-churn files:
-.idea/dataSources.ids
-.idea/dataSources.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
+# .idea/dataSources.ids
+# .idea/dataSources.xml
+# .idea/sqlDataSources.xml
+# .idea/dynamic.xml
+# .idea/uiDesigner.xml
 
 # Gradle:
-.idea/gradle.xml
-.idea/libraries
+# .idea/gradle.xml
+# .idea/libraries
 
 # Mongo Explorer plugin:
-.idea/mongoSettings.xml
+# .idea/mongoSettings.xml
 
 ## File-based project format:
 *.ipr
@@ -80,7 +84,7 @@ proguard/
 ## Plugin-specific files:
 
 # IntelliJ
-out/
+/out/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
@@ -93,5 +97,3 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 
-# Temp files
-*.*~

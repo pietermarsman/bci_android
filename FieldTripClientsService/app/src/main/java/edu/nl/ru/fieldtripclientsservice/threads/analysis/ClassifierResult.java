@@ -1,6 +1,7 @@
 package edu.nl.ru.fieldtripclientsservice.threads.analysis;
 
-import edu.nl.ru.linalg.Matrix;
+
+import edu.nl.ru.matrixalgebra.linalg.Matrix;
 
 /**
  * Created by Pieter on 23-2-2015.
