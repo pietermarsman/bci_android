@@ -3,13 +3,14 @@ package edu.nl.ru.matrixalgebra.test;
 import edu.nl.ru.matrixalgebra.linalg.Matrix;
 import edu.nl.ru.matrixalgebra.miscellaneous.Triple;
 import edu.nl.ru.matrixalgebra.miscellaneous.Tuple;
+import edu.nl.ru.matrixalgebra.miscellaneous.Windows;
 import junit.framework.TestCase;
 import org.apache.commons.math3.linear.DefaultRealMatrixPreservingVisitor;
 import org.apache.commons.math3.linear.RealVector;
 
 public class MatrixTest extends TestCase {
 
-    private Matrix a, b, c, e;
+    private Matrix a, b, c, e, f;
 
     protected void setUp() throws Exception {
         double[][] dataA = {{1.0, 2.0}, {5.0, 4.0}};
@@ -23,6 +24,7 @@ public class MatrixTest extends TestCase {
         b = new Matrix(dataB);
         c = new Matrix(dataC);
         e = new Matrix(dataE);
+        f = e.repeat(2, 1);
     }
 
     public void testMeanAll() throws Exception {
@@ -67,13 +69,13 @@ public class MatrixTest extends TestCase {
 
     public void testRepeat0() throws Exception {
         Matrix repeat = a.repeat(2, 0);
-        double[][] goodAnswer = {{1.0, 2.0}, {1.0, 2.0}, {5.0, 4.0}, {5.0, 4.0}};
+        double[][] goodAnswer = {{1.0, 2.0}, {5.0, 4.0}, {1.0, 2.0}, {5.0, 4.0}};
         assertEquals(new Matrix(goodAnswer), repeat);
     }
 
     public void testRepeat1() throws Exception {
         Matrix repeat = a.repeat(2, 1);
-        double[][] goodAnswer = {{1.0, 1.0, 2.0, 2.0}, {5.0, 5.0, 4.0, 4.0}};
+        double[][] goodAnswer = {{1.0, 2.0, 1.0, 2.0}, {5.0, 4.0, 5.0, 4.0}};
         assertEquals(new Matrix(goodAnswer), repeat);
     }
 
@@ -180,10 +182,10 @@ public class MatrixTest extends TestCase {
     public void testSVD() throws Exception {
         // todo different signs than python in U (columns) and V (rows)
         Triple<Matrix, Matrix, Matrix> usv_t = b.svd();
-        double[][] goodValuesU = {{0.60584241, -0.65941226, 0.44511845}, {0.40002531, -0.2311365, -0.88687974},
+        double[][] goodValuesU = {{0.60584241, -0.65941226, 0.44511845}, {0.40002531, -0.2311365, -0.88687974}, //
                 {0.6877025, 0.71536801, 0.1237493}};
         double[][] goodValuesS = {{0.99574753, 0., 0.}, {0., 0.44439383, 0.}, {0., 0., 0.03163813}};
-        double[][] goodValuesVT = {{0.56286285, 0.46184651, 0.68548027}, {-0.57600592, -0.37560963, 0.72604035},
+        double[][] goodValuesVT = {{0.56286285, 0.46184651, 0.68548027}, {-0.57600592, -0.37560963, 0.72604035}, //
                 {-0.59279219, 0.80350184, -0.05460962}};
         assertEquals(new Matrix(goodValuesU).round(2), usv_t.x.round(2));
         assertEquals(new Matrix(goodValuesS).round(2), usv_t.y.round(2));
@@ -243,12 +245,36 @@ public class MatrixTest extends TestCase {
         assertTrue(ret.getColumnDimension() == 3);
     }
 
-    public void testWelch() throws Exception {
-        Matrix ret = e.welch(1, new double[]{.382, 1., 1., .382}, new int[]{0, 2}, 4, false);
+    public void testWelch1() throws Exception {
+        double[] window = Windows.getWindow(4, Windows.WindowType.HANNING, true);
+        Matrix ret = e.welch(1, window, new int[]{0, 2}, 4, false, false);
         double[][] good = new double[][]{{173.3378, 140.7474, 156.7158}, {551.7926, 354.3962, 85.6544}, {828.5935,
                 709.1306, 757.4176}};
-        assertEquals(new Matrix(good).round(1), ret.round(1));
-        // TODO check if it is correct answer
+        assertEquals(new Matrix(good).round(2), ret.round(2));
+    }
+
+    public void testWelch2() throws Exception {
+        double[] window = Windows.getWindow(4, Windows.WindowType.HANNING, true);
+        Matrix ret = e.welch(1, window, new int[]{0, 2}, 4, false, true);
+        double[][] good = new double[][]{{66.3479, 144.3827, 156.7158}, {195.3260, 315.4483, 85.6544}, {296.4003, //
+                714.9363, 757.4176}};
+        assertEquals(new Matrix(good).round(2), ret.round(2));
+    }
+
+    public void testWelch3() throws Exception {
+        double[] window = Windows.getWindow(4, Windows.WindowType.HANNING, true);
+        Matrix ret = e.welch(1, window, new int[]{0, 2}, 4, true, true);
+        double[][] good = new double[][]{{66.3479, 135.7999, 153.3875}, {195.3260, 312.4941, 79.4878}, //
+                {296.4003, 646.8671, 738.2755}};
+        assertEquals(new Matrix(good).round(2), ret.round(2));
+    }
+
+    public void testWelch4() throws Exception {
+        double[] window = Windows.getWindow(8, Windows.WindowType.HANNING, true);
+        Matrix ret = f.welch(1, window, new int[]{0, 4}, 8, true, false);
+        double[][] good = new double[][]{{37.3481, 84.0159, 107.0543, 111.5361, 121.8311}, {124.8509, 271.8949, //
+                262.5604, 187.5628, 48.8474}, {181.4438, 397.0927, 539.5645, 535.5171, 622.1956}};
+        assertEquals(new Matrix(good).round(2), ret.round(2));
     }
 
 }

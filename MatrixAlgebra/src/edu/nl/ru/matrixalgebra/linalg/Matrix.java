@@ -1,6 +1,9 @@
 package edu.nl.ru.matrixalgebra.linalg;
 
-import edu.nl.ru.matrixalgebra.miscellaneous.*;
+import edu.nl.ru.matrixalgebra.miscellaneous.ArrayFunctions;
+import edu.nl.ru.matrixalgebra.miscellaneous.ParameterChecker;
+import edu.nl.ru.matrixalgebra.miscellaneous.Triple;
+import edu.nl.ru.matrixalgebra.miscellaneous.Tuple;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -20,6 +23,7 @@ import static org.apache.commons.math3.stat.StatUtils.max;
 
 /**
  * Created by Pieter on 27-1-2015.
+ * Wrapper for linear algebra functions on matrices.
  * 2D array with lots of functions from the Math Commons library
  */
 public class Matrix extends Array2DRowRealMatrix {
@@ -61,7 +65,8 @@ public class Matrix extends Array2DRowRealMatrix {
 
     /**
      * Empty matrix with specific dimensions
-     * @param rowDimension number of rows
+     *
+     * @param rowDimension    number of rows
      * @param columnDimension number of columns
      */
     public Matrix(int rowDimension, int columnDimension) {
@@ -179,8 +184,7 @@ public class Matrix extends Array2DRowRealMatrix {
         for (int i = 0; i < getRowDimension(); i++) {
             for (int j = 0; j < getColumnDimension(); j++)
                 sb.append(getData()[i][j]).append(" ");
-            if (i < getRowDimension() - 1)
-                sb.append("\n");
+            if (i < getRowDimension() - 1) sb.append("\n");
         }
         return sb.toString();
     }
@@ -204,6 +208,13 @@ public class Matrix extends Array2DRowRealMatrix {
         ParameterChecker.checkAxis(axis);
 
         return axis == 0 ? this.getRowDimension() : this.getColumnDimension();
+    }
+
+    /**
+     * Transposes the matrix: X'_{ij} = X_{ji}
+     */
+    public Matrix transpose() {
+        return new Matrix(super.transpose());
     }
 
     /**
@@ -267,33 +278,21 @@ public class Matrix extends Array2DRowRealMatrix {
      *
      * @param repeats number of times to repeat
      * @param axis    direction in which to repeat (0 is rows, 1 is columns)
-     * @return new matrix with repeated values along a particular axis. Total matrix is repeated, not the specific values.
+     * @return new matrix with repeated values along a particular axis. Total matrix is repeated, not the specific
+     * values.
      */
     public Matrix repeat(int repeats, int axis) {
         ParameterChecker.checkAxis(axis);
         ParameterChecker.checkRepeats(repeats);
 
-        int rows = this.getRowDimension();
-        int columns = this.getColumnDimension();
-        if (axis == 0)
-            rows = rows * repeats;
-        else
-            columns = columns * repeats;
-        Matrix repeated;
-        if (axis == 0) {
-            double[][] newData = new double[rows][columns];
+        if (axis == 1) return this.transpose().repeat(repeats, 0).transpose();
+        else {
+            double[][] newData = new double[this.getRowDimension() * repeats][this.getColumnDimension()];
             for (int r = 0; r < this.getRowDimension(); r++)
                 for (int t = 0; t < repeats; t++)
-                    newData[t + repeats * r] = this.getRow(r);
-            repeated = new Matrix(newData);
-        } else {
-            double[][] newData = new double[columns][rows];
-            for (int c = 0; c < this.getColumnDimension(); c++)
-                for (int t = 0; t < repeats; t++)
-                    newData[t + repeats * c] = this.getColumn(c);
-            repeated = new Matrix(new Matrix(newData).transpose());
+                    newData[t * this.getRowDimension() + r] = this.getRow(r);
+            return new Matrix(newData);
         }
-        return repeated;
     }
 
     /**
@@ -347,14 +346,10 @@ public class Matrix extends Array2DRowRealMatrix {
         ParameterChecker.checkAxis(axis, true);
 
         double scalar;
-        if (axis == 0)
-            scalar = this.getRowDimension();
-        else if (axis == 1)
-            scalar = this.getColumnDimension();
-        else if (axis == -1)
-            scalar = this.getRowDimension() * this.getColumnDimension();
-        else
-            throw new IllegalArgumentException("Wrong axis selected. Should be either -1, 0 or 1 but is " + axis);
+        if (axis == 0) scalar = this.getRowDimension();
+        else if (axis == 1) scalar = this.getColumnDimension();
+        else if (axis == -1) scalar = this.getRowDimension() * this.getColumnDimension();
+        else throw new IllegalArgumentException("Wrong axis selected. Should be either -1, 0 or 1 but is " + axis);
         scalar = 1.0 / scalar;
         return new Matrix(this.sum(axis).scalarMultiply(scalar));
     }
@@ -368,6 +363,26 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix median(int axis) {
         Median med = new Median();
         return this.evaluateUnivariateStatistic(axis, med);
+    }
+
+    /**
+     * Element wise addition of the current matrix and another. Matrices should have same shape.
+     *
+     * @param b the other matrix
+     * @return new matrix were each element is this_{ij} + b_{ij}
+     */
+    public Matrix add(final Matrix b) {
+        return new Matrix(super.add(b));
+    }
+
+    /**
+     * Element wise subtraction of the current matrix and another. Matrices should have same shape.
+     *
+     * @param b the other matrix
+     * @return new matrix were each element is this_{ij} - b_{ij}
+     */
+    public Matrix subtract(final Matrix b) {
+        return new Matrix(super.subtract(b));
     }
 
     /**
@@ -453,14 +468,7 @@ public class Matrix extends Array2DRowRealMatrix {
 
         double[][] data = this.getData();
         if (axis == -1) {
-            double[] mean = {0.0};
-            for (double[] row : data) {
-                for (double elem : row) {
-                    mean[0] += elem;
-                }
-            }
-
-            return new Matrix(mean);
+            return this.sum(0).sum(0);
         } else if (axis == 0) {
             double[] mean = new double[this.getColumnDimension()];
             for (int i = 0; i < this.getRowDimension(); i++) {
@@ -470,13 +478,7 @@ public class Matrix extends Array2DRowRealMatrix {
             }
             return new Matrix(mean);
         } else if (axis == 1) {
-            double[] mean = new double[this.getRowDimension()];
-            for (int i = 0; i < data.length; i++) {
-                for (int j = 0; j < data[i].length; j++) {
-                    mean[i] += data[i][j];
-                }
-            }
-            return new Matrix(mean);
+            return this.transpose().sum(0);
         } else {
             throw new IllegalArgumentException("Wrong axis selected. Should be either -1, 0 or 1 but is " + axis);
         }
@@ -543,8 +545,7 @@ public class Matrix extends Array2DRowRealMatrix {
             Matrix mean = this.mean(axis);
             int otherAxis = axis == 0 ? 1 : 0;
             mean = mean.repeat(this.getDimension(axis), 1);
-            if (axis == 0)
-                mean = new Matrix(mean.transpose());
+            mean = axis == 0 ? mean.transpose() : mean;
             return new Matrix(this.subtract(mean));
         } else {
             double[][] ret = this.getData();
@@ -605,7 +606,6 @@ public class Matrix extends Array2DRowRealMatrix {
     public Matrix fft(int axis, TransformType direction) {
         ParameterChecker.checkAxis(axis);
 
-        // FIXME which normalization to use?
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         double[][] ft = new double[this.getRowDimension()][this.getColumnDimension()];
         if (axis == 0) {
@@ -615,11 +615,7 @@ public class Matrix extends Array2DRowRealMatrix {
                     ft[i][c] = Math.pow(complexResult[i].abs(), 2.0);
             }
         } else {
-            for (int r = 0; r < this.getRowDimension(); r++) {
-                Complex[] complexResult = fft.transform(this.getRow(r), direction);
-                for (int i = 0; i < complexResult.length; i++)
-                    ft[r][i] = Math.pow(complexResult[i].abs(), 2.0);
-            }
+            return this.transpose().fft(0, direction).transpose();
         }
         return new Matrix(ft);
     }
@@ -634,7 +630,6 @@ public class Matrix extends Array2DRowRealMatrix {
     public Complex[][] fftComplex(int axis, TransformType direction) {
         ParameterChecker.checkAxis(axis);
 
-        // FIXME which normalization to use?
         FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
         Complex[][] ft = new Complex[this.getRowDimension()][this.getColumnDimension()];
         if (axis == 0) {
@@ -646,11 +641,8 @@ public class Matrix extends Array2DRowRealMatrix {
             }
         } else {
             for (int r = 0; r < this.getRowDimension(); r++) {
-                double row[] = new double[(int) Math.pow(Math.ceil(ExtraMath.log(this.getRowDimension(), 2)), 2)];
-                for (int c = 0; c < this.getColumnDimension(); c++)
-                    row[c] = this.getEntry(r, c);
-                Complex[] fftResult = fft.transform(row, direction);
-                System.arraycopy(fftResult, 0, ft[r], 0, this.getColumnDimension());
+                Complex[] complexResult = fft.transform(this.getRow(r), direction);
+                System.arraycopy(complexResult, 0, ft[r], 0, complexResult.length);
             }
         }
         return ft;
@@ -673,6 +665,7 @@ public class Matrix extends Array2DRowRealMatrix {
      */
     public Tuple<Matrix, RealVector> eig(String order) {
         ParameterChecker.checkString(order, new String[]{"descending", "ascending"});
+
         EigenDecomposition eig = new EigenDecomposition(this);
         RealMatrix oldVectors = new Array2DRowRealMatrix(eig.getV().getData());
         double[] oldValues = eig.getRealEigenvalues();
@@ -763,7 +756,7 @@ public class Matrix extends Array2DRowRealMatrix {
             }
             return new Matrix(data);
         } else {
-            return new Matrix(new Matrix(this.transpose()).convolve(function, 0).transpose());
+            return this.transpose().convolve(function, 0).transpose();
         }
     }
 
@@ -784,10 +777,8 @@ public class Matrix extends Array2DRowRealMatrix {
         ParameterChecker.checkString(feat, new String[]{"var", "mu"});
 
         Matrix m = this;
-        if (maxIter > 1)
-            m = m.removeOutliers(axis, lowerThreshold, upperThreshold, maxIter - 1, feat);
-        if (m == null)
-            return null;
+        if (maxIter > 1) m = m.removeOutliers(axis, lowerThreshold, upperThreshold, maxIter - 1, feat);
+        if (m == null) return null;
 
         Matrix feature;
         if (feat.equalsIgnoreCase("var")) {
@@ -806,8 +797,7 @@ public class Matrix extends Array2DRowRealMatrix {
             inlierCount += (low < val) && (val < high) ? 1 : 0;
         }
 
-        if (inlierCount <= 0)
-            return null;
+        if (inlierCount <= 0) return null;
         else {
             int index = 0;
             Matrix ret;
@@ -845,7 +835,7 @@ public class Matrix extends Array2DRowRealMatrix {
      * @param detrendP if the resulting matrix should be detrended
      * @return precise estimation of the power of the frequencies of the matrix.
      */
-    public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendP) {
+    public Matrix welch(final int dim, final double[] taper, int[] start, int width, boolean detrendP, boolean center) {
         ParameterChecker.checkAxis(dim, false);
         ParameterChecker.checkPower(width, 2);
         ParameterChecker.checkEquals(taper.length, width);
@@ -889,20 +879,18 @@ public class Matrix extends Array2DRowRealMatrix {
             // Get submatrix
             Matrix wX = new Matrix(this.getSubMatrix(idx.get(0), idx.get(1)));
 
-            // TODO add centerP (subtracting mean from the sample p
+            if (center) // Subtract mean from window
+                wX = wX.subtract(wX.mean(dim).repeat(wX.getDimension(dim), dim));
 
-            // Detrend submatrix
-            if (detrendP)
+            if (detrendP) // Detrend window
                 wX = wX.detrend(dim, "linear");
 
-            // Window
+            // Apply weighting to window
             wX.walkInOptimizedOrder(new DefaultRealMatrixChangingVisitor() {
                 @Override
                 public double visit(int row, int column, double value) {
-                    if (dim == 0)
-                        return value * taper[row];
-                    else
-                        return value * taper[column];
+                    if (dim == 0) return value * taper[row];
+                    else return value * taper[column];
                 }
             });
 
