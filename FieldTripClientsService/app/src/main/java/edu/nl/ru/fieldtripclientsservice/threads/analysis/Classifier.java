@@ -137,7 +137,7 @@ public class Classifier {
         // Welch frequency estimation
         if (data.getColumnDimension() >= windowFn.length) {
             Log.v(TAG, "Spectral filtering with welch method");
-            data = data.welch(1, windowFn, welchStartMs, windowLength, true);
+            data = data.welch(1, windowFn, welchStartMs, windowLength, true, true);
             Log.v(TAG, "Data shape after welch frequency estimation: " + data.shapeString());
         }
 
