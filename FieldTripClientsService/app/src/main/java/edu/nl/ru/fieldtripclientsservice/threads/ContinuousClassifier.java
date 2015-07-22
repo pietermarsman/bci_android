@@ -264,7 +264,7 @@ public class ContinuousClassifier extends ThreadBase {
         arguments[13] = new Argument("Prediction filter", 1.0, true);
         arguments[14] = new Argument("Sample trial length", 25, true);
         arguments[15] = new Argument("Sample trial ms", null);
-        arguments[16] = new Argument("Alpha type", "power"); // "lat", "power" or "normalized lat"
+        arguments[16] = new Argument("Alpha type", C.ALPHA_NORM_LAT);
         return arguments;
     }
 
