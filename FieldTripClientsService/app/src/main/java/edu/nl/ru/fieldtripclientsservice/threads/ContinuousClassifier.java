@@ -1,6 +1,7 @@
 package edu.nl.ru.fieldtripclientsservice.threads;
 
 import android.util.Log;
+import edu.nl.ru.fieldtripclientsservice.C;
 import edu.nl.ru.fieldtripclientsservice.base.AndroidHandle;
 import edu.nl.ru.fieldtripclientsservice.base.Argument;
 import edu.nl.ru.fieldtripclientsservice.base.ThreadBase;
@@ -30,26 +31,26 @@ public class ContinuousClassifier extends ThreadBase {
 
     private static final String TAG = ContinuousClassifier.class.getSimpleName();
 
-    private String bufferHost;
-    private String endValue;
-    private String predictionEventType;
-    private String baselineEventType;
-    private String endType;
-    private String baselineEnd;
-    private String baselineStart;
+    private String bufferHost; // url address
+    private int bufferPort; // port
+    private String endValue; // received end event value
+    private String endType; // received end event type
+    private String baselineEventType; // received start/stop baseline event type
+    private String baselineEnd; // received stop baseline event value
+    private String baselineStart; // received start baseline event value
+    private String predictionEventType; // transmitted type of prediction event
     private Integer nBaselineStep;
-    private int bufferPort;
-    private Double overlap;
-    private Double predictionFilter;
-    private Integer sampleTrialMs;
-    private Integer sampleStepMs;
+    private Double overlap; // overlap between samples
+    private Double predictionFilter; // filtering output values
+    private Integer sampleTrialMs; // duration of sample in ms
+    private Integer sampleTrialLength; // duration of sample in steps
+    private Integer sampleStepMs; // duration between samples in ms
+    private Integer sampleStep; // duration between samples in steps
     private Integer timeoutMs;
-    private boolean normalizeLatitude;
+    private String alphaType; // Type of output: alpha lat, alpha power or normalized alpha lat
     private List<Classifier> classifiers;
-    private BufferClientClock C;
-    private Integer sampleTrialLength;
-    private Integer sampleStep;
-    private Float fs;
+    private BufferClientClock clock;
+    private Float fs; // sampling rate of the buffer
     private Header header;
 
     /**
@@ -157,10 +158,10 @@ public class ContinuousClassifier extends ThreadBase {
         while (header == null) {
             try {
                 Log.i(TAG, "Connecting to " + bufferHost + ":" + bufferPort);
-                C.connect(bufferHost, bufferPort);
-                //C.setAutoReconnect(true);
-                if (C.isConnected()) {
-                    header = C.getHeader();
+                clock.connect(bufferHost, bufferPort);
+                //clock.setAutoReconnect(true);
+                if (clock.isConnected()) {
+                    header = clock.getHeader();
                 }
             } catch (IOException e) {
                 header = null;
@@ -191,11 +192,11 @@ public class ContinuousClassifier extends ThreadBase {
         arguments[9] = new Argument("N Baseline step", 5000, true);
         arguments[10] = new Argument("Overlap", .5, true);
         arguments[11] = new Argument("Timeout ms", 1000, true);
-        arguments[12] = new Argument("Sample step ms", 500, true);
+        arguments[12] = new Argument("Sample step ms", 50, true);
         arguments[13] = new Argument("Prediction filter", 1.0, true);
         arguments[14] = new Argument("Sample trial length", 25, true);
         arguments[15] = new Argument("Sample trial ms", null);
-        arguments[16] = new Argument("Normalize latitude", true);
+        arguments[16] = new Argument("Alpha type", "power"); // "lat", "power" or "normalized lat"
         return arguments;
     }
 
@@ -219,10 +220,10 @@ public class ContinuousClassifier extends ThreadBase {
         this.predictionFilter = arguments[13].getDouble();
         this.sampleTrialLength = arguments[14].getInteger();
         this.sampleTrialMs = arguments[15].getInteger();
-        this.normalizeLatitude = arguments[16].getBoolean();
+        this.alphaType = arguments[16].getString();
 
         this.classifiers = createClassifiers(android);
-        this.C = new BufferClientClock();
+        this.clock = new BufferClientClock();
     }
 
     @Override
@@ -261,7 +262,7 @@ public class ContinuousClassifier extends ThreadBase {
             // Block until there are new events
             try {
                 Log.d(TAG, "Waiting for " + (nSamples + sampleTrialLength + 1) + " samples");
-                status = C.waitForSamples(nSamples + sampleTrialLength + 1, this.timeoutMs);
+                status = clock.waitForSamples(nSamples + sampleTrialLength + 1, this.timeoutMs);
             } catch (IOException e) {
                 Log.e(TAG, Log.getStackTraceString(e));
             }
@@ -289,7 +290,7 @@ public class ContinuousClassifier extends ThreadBase {
                 int toId = fromId + sampleTrialLength - 1;
                 Matrix data = null;
                 try {
-                    data = new Matrix(new Matrix(C.getDoubleData(fromId, toId)).transpose());
+                    data = new Matrix(new Matrix(clock.getDoubleData(fromId, toId)).transpose());
                 } catch (IOException e) {
                     Log.e(TAG, Log.getStackTraceString(e));
                 }
@@ -298,7 +299,7 @@ public class ContinuousClassifier extends ThreadBase {
                 // Apply all classifiers and add results
                 Matrix f = new Matrix(classifiers.get(0).getOutputSize(), 1);
                 Matrix fraw = new Matrix(classifiers.get(0).getOutputSize(), 1);
-                ClassifierResult result = null;
+                ClassifierResult result;
                 for (Classifier c : classifiers) {
                     result = c.apply(data);
                     f = new Matrix(f.add(result.f));
@@ -309,9 +310,15 @@ public class ContinuousClassifier extends ThreadBase {
                 double[] dvColumn = f.getColumn(0);
                 f = new Matrix(dvColumn.length - 1, 1);
                 f.setColumn(0, Arrays.copyOfRange(dvColumn, 1, dvColumn.length));
-                if (normalizeLatitude) f.setEntry(0, 0, (dvColumn[0] - dvColumn[1]) / (dvColumn[0] + dvColumn[1]));
-                else f.setEntry(0, 0, dvColumn[0] - dvColumn[1]);
-
+                if (alphaType.equals(C.ALPHA_NORM_LAT))
+                    f.setEntry(0, 0, (dvColumn[0] - dvColumn[1]) / (dvColumn[0] + dvColumn[1]));
+                else if (alphaType.equals(C.ALPHA_LAT))
+                    f.setEntry(0, 0, dvColumn[0] - dvColumn[1]);
+                else if (alphaType.equals(C.ALPHA_POWER))
+                    f.setEntry(0, 0, dvColumn[0] + dvColumn[1]);
+                else
+                    throw new IllegalArgumentException(String.format("Alpha type should be one of:\n-%s\n-%s\n-%s",
+                            C.ALPHA_NORM_LAT, C.ALPHA_LAT, C.ALPHA_POWER));
 
                 // Smooth the classifiers
                 if (dv == null || predictionFilter == null) dv = f;
@@ -341,7 +348,8 @@ public class ContinuousClassifier extends ThreadBase {
                 // Send prediction event
                 try {
                     BufferEvent event = new BufferEvent(predictionEventType, dv.getColumn(0), fromId);
-                    C.putEvent(event);
+                    Log.d(TAG, "Sending event: " + event.toString());
+                    clock.putEvent(event);
                 } catch (IOException e) {
                     Log.e(TAG, Log.getStackTraceString(e));
                 }
@@ -351,7 +359,7 @@ public class ContinuousClassifier extends ThreadBase {
             if (status.nEvents > nEvents) {
                 BufferEvent[] events = null;
                 try {
-                    events = C.getEvents(nEvents, status.nEvents - 1);
+                    events = clock.getEvents(nEvents, status.nEvents - 1);
                 } catch (IOException e) {
                     Log.e(TAG, Log.getStackTraceString(e));
                 }
@@ -382,7 +390,7 @@ public class ContinuousClassifier extends ThreadBase {
             }
         }
         try {
-            C.disconnect();
+            clock.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -421,7 +429,7 @@ public class ContinuousClassifier extends ThreadBase {
                 "\nBaselineEnd \t" + baselineEnd +
                 "\nBaselineStart\t" + baselineStart +
                 "\nBaselineStep\t" + nBaselineStep +
-                "\nNormalizeLat\t" + normalizeLatitude +
+                "\nNormalizeLat\t" + alphaType +
                 "\nFs           \t" + fs;
     }
 }

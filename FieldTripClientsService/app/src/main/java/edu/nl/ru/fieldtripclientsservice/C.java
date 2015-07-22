@@ -31,4 +31,7 @@ public final class C {
 
     public static final String WAKELOCKTAGWIFI = "edu.nl.ru.fieldtripclientsservice.wakelockwifi";
 
+    public static final String ALPHA_LAT = "edu.nl.ru.fieldtripclientsservice.alphalat";
+    public static final String ALPHA_POWER = "edu.nl.ru.fieldtripclientsservice.alphapower";
+    public static final String ALPHA_NORM_LAT = "edu.nl.ru.fieldtripclientsservice.normalphalat";
 }
